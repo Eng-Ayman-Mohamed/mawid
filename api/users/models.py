@@ -14,5 +14,5 @@ class CustomUser(AbstractBaseUser, PermissionsMixin):
     is_blocked = models.BooleanField(default=False)
 
     USERNAME_FIELD = 'email'
-    REQUIRED_FIELDS = ['role']
+    REQUIRED_FIELDS = ['role', 'username']
     
