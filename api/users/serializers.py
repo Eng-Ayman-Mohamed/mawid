@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from .models import CustomUser, UserRole, DoctorProfile, PatientProfile
+from .models import CustomUser, UserRole
 
 
 class RegisterSerializer(serializers.ModelSerializer):
@@ -15,13 +15,7 @@ class RegisterSerializer(serializers.ModelSerializer):
         return value
 
     def create(self, validated_data):
-        user = CustomUser.objects.create_user(**validated_data)
-        # auto-create the matching profile
-        if user.role == UserRole.DOCTOR:
-            DoctorProfile.objects.create(user=user)
-        elif user.role == UserRole.PATIENT:
-            PatientProfile.objects.create(user=user)
-        return user
+        return CustomUser.objects.create_user(**validated_data)
 
 
 class UserSerializer(serializers.ModelSerializer):
