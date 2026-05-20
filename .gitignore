@@ -1,2 +1,24 @@
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+
+# Django
+*.sqlite3
+*.log
+media/
+staticfiles/
+
+# Environment
 .env
-.venv
+.venv/
+venv/
+env/
+
+# IDE
+.vscode/
+.idea/
+
+# Migrations (optional — most teams keep these)
+ */migrations/*.py
+ !*/migrations/__init__.py
