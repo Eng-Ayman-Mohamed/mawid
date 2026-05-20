@@ -31,10 +31,13 @@ class CustomUser(AbstractBaseUser, PermissionsMixin):
     email       = models.EmailField(unique=True)
     is_approved = models.BooleanField(default=False)
     is_blocked  = models.BooleanField(default=False)
-    is_active   = models.BooleanField(default=True)   
-    is_staff    = models.BooleanField(default=False)  
+    is_active = models.BooleanField(default=True)
+    is_staff  = models.BooleanField(default=False)
 
-    objects = CustomUserManager()                      
+    objects = CustomUserManager()
 
     USERNAME_FIELD  = 'email'
-    REQUIRED_FIELDS = ['role']                         
+    REQUIRED_FIELDS = ['role']  
+
+    def __str__(self):
+        return f'{self.email} ({self.role})'
