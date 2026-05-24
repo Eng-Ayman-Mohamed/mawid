@@ -5,6 +5,7 @@ from .serializers import PatientProfileSerializer, AppointmentBookingSerializer,
 from rest_framework.response import Response
 from rest_framework.response import Response
 from rest_framework.views import APIView
+from .permissions import IsPatientRole, IsOwnerOrAdmin 
 
 class PatientProfileView(generics.RetrieveUpdateAPIView):
     serializer_class = PatientProfileSerializer
@@ -64,6 +65,50 @@ class RescheduleAppointmentView(generics.UpdateAPIView):
 class PatientAppointmentListView(generics.ListAPIView):
     serializer_class = AppointmentBookingSerializer
     permission_classes = [IsAuthenticated]
+
+    def get_queryset(self):
+        patient_profile = Patient.objects.get(user=self.request.user)
+        return Appointment.objects.filter(patient=patient_profile).order_by('appointment_date', 'appointment_time')
+
+
+class PatientProfileView(generics.RetrieveUpdateAPIView):
+    serializer_class = PatientProfileSerializer
+    permission_classes = [IsAuthenticated, IsPatientRole]
+
+    def get_object(self):
+        patient_profile, created = Patient.objects.get_or_create(user=self.request.user)
+        self.check_object_permissions(self.request, patient_profile)
+        return patient_profile
+
+
+class BookAppointmentView(generics.CreateAPIView):
+    serializer_class = AppointmentBookingSerializer
+    permission_classes = [IsAuthenticated, IsPatientRole] 
+
+    def perform_create(self, serializer):
+        patient_profile = Patient.objects.get(user=self.request.user)
+        serializer.save(patient=patient_profile)
+
+
+class CancelAppointmentView(APIView):
+    permission_classes = [IsAuthenticated, IsPatientRole] 
+
+    def post(self, request, pk):
+        pass
+
+
+class RescheduleAppointmentView(generics.UpdateAPIView):
+    serializer_class = AppointmentRescheduleSerializer
+    permission_classes = [IsAuthenticated, IsPatientRole, IsOwnerOrAdmin]
+
+    def get_queryset(self):
+        patient_profile = Patient.objects.get(user=self.request.user)
+        return Appointment.objects.filter(patient=patient_profile)
+
+
+class PatientAppointmentListView(generics.ListAPIView):
+    serializer_class = AppointmentBookingSerializer
+    permission_classes = [IsAuthenticated, IsPatientRole]  
 
     def get_queryset(self):
         patient_profile = Patient.objects.get(user=self.request.user)
