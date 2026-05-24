@@ -31,3 +31,32 @@ class AppointmentBookingSerializer(serializers.ModelSerializer):
             )
 
         return data
+    
+class AppointmentRescheduleSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Appointment
+        fields = ['appointment_date', 'appointment_time']
+
+    def validate(self, data):
+        appointment = self.instance 
+        doctor = appointment.doctor
+        new_date = data['appointment_date']
+        new_time = data['appointment_time']
+
+        if appointment.status in ['completed', 'cancelled']:
+            raise serializers.ValidationError(
+                f"Cannot reschedule an appointment that is already {appointment.status}."
+            )
+
+        existing_appointment = Appointment.objects.filter(
+            doctor=doctor,
+            appointment_date=new_date,
+            appointment_time=new_time
+        ).exclude(id=appointment.id).exclude(status='cancelled').exists()
+
+        if existing_appointment:
+            raise serializers.ValidationError(
+                "This doctor is already booked for this new date and time slot."
+            )
+
+        return data
