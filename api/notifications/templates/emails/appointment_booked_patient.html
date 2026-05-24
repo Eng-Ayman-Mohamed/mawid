@@ -1,0 +1,18 @@
+<!doctype html>
+<html>
+<body style="font-family: Arial, sans-serif; color: #222; max-width: 600px; margin: auto;">
+  <h2>Appointment Request Submitted</h2>
+  <p>Hello {{ appointment.patient.user.email }},</p>
+  <p>Your appointment request has been submitted. Here are the details:</p>
+  <table style="border-collapse: collapse; width: 100%;">
+    <tr><td style="padding: 6px; font-weight: bold;">Doctor</td><td style="padding: 6px;">{{ appointment.doctor.user.email }}</td></tr>
+    <tr><td style="padding: 6px; font-weight: bold;">Date</td><td style="padding: 6px;">{{ appointment.date }}</td></tr>
+    <tr><td style="padding: 6px; font-weight: bold;">Time</td><td style="padding: 6px;">{{ appointment.time_slot }}</td></tr>
+    <tr><td style="padding: 6px; font-weight: bold;">Status</td><td style="padding: 6px;">{{ appointment.status|title }}</td></tr>
+    <tr><td style="padding: 6px; font-weight: bold;">Reason</td><td style="padding: 6px;">{{ appointment.reason }}</td></tr>
+  </table>
+  <p>You will be notified when the doctor responds.</p>
+  <hr>
+  <small>Mawid — automated message, please do not reply.</small>
+</body>
+</html>

@@ -1,0 +1,15 @@
+<!doctype html>
+<html>
+<body style="font-family: Arial, sans-serif; color: #222; max-width: 600px; margin: auto;">
+  <h2>Welcome to Mawid!</h2>
+  <p>Hello {{ user.email }},</p>
+  <p>Your account was created successfully.</p>
+  {% if user.role == "doctor" %}
+    <p>Your account is <strong>pending admin approval</strong>. We will email you once it has been reviewed.</p>
+  {% else %}
+    <p>You can now book appointments at <a href="{{ frontend }}">{{ frontend }}</a>.</p>
+  {% endif %}
+  <hr>
+  <small>Mawid — automated message, please do not reply.</small>
+</body>
+</html>
