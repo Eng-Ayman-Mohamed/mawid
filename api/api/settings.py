@@ -50,6 +50,8 @@ INSTALLED_APPS = [
     'doctors',
     'patients',
     'admins',
+    'appointments',
+    'notifications',
 ]
 
 MIDDLEWARE = [
@@ -74,9 +76,6 @@ SIMPLE_JWT = {
     'ROTATE_REFRESH_TOKENS': True,
     'BLACKLIST_AFTER_ROTATION': True,
 }
-
-AUTH_USER_MODEL = 'accounts.CustomUser'
-
 
 ROOT_URLCONF = 'api.urls'
 
