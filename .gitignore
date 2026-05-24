@@ -1,2 +1,9 @@
 .env
 .venv
+**/migrations/*.py
+!**/migrations/__init__.py
+*.sqlite3
+venv/
+myenv/
+__pycache__/
+*.pyc
