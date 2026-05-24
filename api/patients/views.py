@@ -60,3 +60,11 @@ class RescheduleAppointmentView(generics.UpdateAPIView):
 
     def perform_update(self, serializer):
         serializer.save(status='pending')
+
+class PatientAppointmentListView(generics.ListAPIView):
+    serializer_class = AppointmentBookingSerializer
+    permission_classes = [IsAuthenticated]
+
+    def get_queryset(self):
+        patient_profile = Patient.objects.get(user=self.request.user)
+        return Appointment.objects.filter(patient=patient_profile).order_by('appointment_date', 'appointment_time')
