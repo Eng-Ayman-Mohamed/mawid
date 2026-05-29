@@ -7,6 +7,8 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../..
 import { Header } from '../../components/Header';
 import { useMedicalApp } from '../../context/MedicalAppContext';
 import { translations } from '../../utils/translations';
+import { adminService } from './adminService';
+import { toast } from 'sonner';
 
 export function AdminLogin() {
   const { language, setUserRole } = useMedicalApp();
@@ -17,8 +19,22 @@ export function AdminLogin() {
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    setUserRole('admin');
-    navigate('/admin/dashboard');
+    adminService
+      .login(email, password)
+      .then((data) => {
+        if (data.user?.role !== 'admin') {
+          toast.error(language === 'en' ? 'Admin access is required' : 'Admin access is required');
+          return;
+        }
+
+        localStorage.setItem('access', data.access);
+        localStorage.setItem('refresh', data.refresh);
+        setUserRole('admin');
+        navigate('/admin/dashboard');
+      })
+      .catch((error) => {
+        toast.error(error.message);
+      });
   };
 
   return (

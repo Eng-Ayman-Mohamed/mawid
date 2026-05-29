@@ -6,48 +6,76 @@ import { Header } from '../../components/Header';
 import { useMedicalApp } from '../../context/MedicalAppContext';
 import { translations } from '../../utils/translations';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
+import { useEffect, useState } from 'react';
+import { adminService } from './adminService';
+
+interface DashboardStats {
+  total_users: number;
+  total_doctors: number;
+  total_patients: number;
+  total_appointments: number;
+}
+
+interface MonthlyStat {
+  month: string;
+  appointments: number;
+  patients: number;
+}
 
 export function AdminDashboard() {
   const { language } = useMedicalApp();
   const t = translations[language];
+  const [dashboardStats, setDashboardStats] = useState<DashboardStats>({
+    total_users: 0,
+    total_doctors: 0,
+    total_patients: 0,
+    total_appointments: 0,
+  });
+  const [chartData, setChartData] = useState<MonthlyStat[]>([]);
+
+  useEffect(() => {
+    adminService
+      .getDashboard()
+      .then((data) => {
+        setDashboardStats(data.stats);
+        setChartData(data.monthly || []);
+      })
+      .catch(() => {
+        setDashboardStats({
+          total_users: 0,
+          total_doctors: 0,
+          total_patients: 0,
+          total_appointments: 0,
+        });
+        setChartData([]);
+      });
+  }, []);
 
   const stats = [
     {
       title: t.totalUsers,
-      value: '1,245',
+      value: dashboardStats.total_users.toLocaleString(),
       icon: Users,
       color: 'text-primary',
-      change: '+12% from last month',
     },
     {
       title: t.totalDoctors,
-      value: '156',
+      value: dashboardStats.total_doctors.toLocaleString(),
       icon: UserCheck,
       color: 'text-accent',
-      change: '+8 new this month',
     },
     {
       title: t.totalPatients,
-      value: '1,089',
+      value: dashboardStats.total_patients.toLocaleString(),
       icon: Users,
       color: 'text-purple-600',
-      change: '+15% from last month',
     },
     {
       title: t.totalAppointments,
-      value: '3,842',
+      value: dashboardStats.total_appointments.toLocaleString(),
       icon: Calendar,
       color: 'text-green-600',
-      change: '234 this week',
     },
-  ];
-
-  const chartData = [
-    { month: language === 'en' ? 'Jan' : 'يناير', appointments: 245, patients: 180 },
-    { month: language === 'en' ? 'Feb' : 'فبراير', appointments: 310, patients: 220 },
-    { month: language === 'en' ? 'Mar' : 'مارس', appointments: 380, patients: 280 },
-    { month: language === 'en' ? 'Apr' : 'أبريل', appointments: 425, patients: 310 },
-    { month: language === 'en' ? 'May' : 'مايو', appointments: 520, patients: 390 },
   ];
 
   return (
@@ -99,7 +127,6 @@ export function AdminDashboard() {
                 </div>
                 <p className="text-sm text-muted-foreground mb-1">{stat.title}</p>
                 <p className="text-2xl font-bold mb-1">{stat.value}</p>
-                <p className="text-xs text-muted-foreground">{stat.change}</p>
               </CardContent>
             </Card>
           ))}

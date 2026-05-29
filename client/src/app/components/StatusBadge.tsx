@@ -1,5 +1,6 @@
 import { Badge } from './ui/badge';
-import type { AppointmentStatus } from '../data/mockData';
+
+type AppointmentStatus = 'pending' | 'confirmed' | 'completed' | 'cancelled';
 
 interface StatusBadgeProps {
   status: AppointmentStatus;
