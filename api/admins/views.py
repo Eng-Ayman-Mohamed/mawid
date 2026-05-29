@@ -5,7 +5,7 @@ from rest_framework.response import Response
 from users.models import CustomUser
 from users.permissions import IsAdminRole
 from doctors.models import Specialty
-from appointments.models import Appointment
+from patients.models import Appointment
 
 from .serializers import (
     AdminUserSerializer,

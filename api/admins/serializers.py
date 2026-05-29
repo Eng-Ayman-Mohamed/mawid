@@ -1,7 +1,7 @@
 from rest_framework import serializers
 from users.models import CustomUser
 from doctors.models import Specialty
-from appointments.models import Appointment
+from patients.models import Appointment
 
 
 
