@@ -30,7 +30,8 @@ class Appointment(models.Model):
     doctor = models.ForeignKey('doctors.Doctor', on_delete=models.CASCADE, related_name='appointments')
     appointment_date = models.DateField()
     appointment_time = models.TimeField()  
-    
+    notes = models.TextField(blank=True, null=True)
+
     status = models.CharField(
         max_length=15, 
         choices=AppointmentStatus.choices, 
