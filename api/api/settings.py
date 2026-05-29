@@ -82,7 +82,7 @@ if DEBUG:
             'ENGINE':   'django.db.backends.postgresql',
             'NAME':     'mawid_dev',
             'USER':     'postgres',
-            'PASSWORD': 'postgres',
+            'PASSWORD': '1234',
             'HOST':     'localhost',
         }
     }
