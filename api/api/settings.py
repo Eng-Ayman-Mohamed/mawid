@@ -82,8 +82,9 @@ if DEBUG:
             'ENGINE':   'django.db.backends.postgresql',
             'NAME':     'mawid_dev',
             'USER':     'postgres',
-            'PASSWORD': 'postgres',
+            'PASSWORD': '123',
             'HOST':     'localhost',
+            'DISABLE_SERVER_SIDE_CURSORS': True
         }
     }
 else:
@@ -94,6 +95,7 @@ else:
             'USER':     os.environ.get('DB_USER'),
             'PASSWORD': os.environ.get('DB_PASSWORD'),
             'HOST':     os.environ.get('DB_HOST'),
+            'DISABLE_SERVER_SIDE_CURSORS': True
         }
     }
 
