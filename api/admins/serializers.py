@@ -1,8 +1,8 @@
 from rest_framework import serializers
+from drf_spectacular.utils import extend_schema_field
 from users.models import CustomUser
 from doctors.models import Specialty
 from patients.models import Appointment
-
 
 
 # USERS (Admin View)
@@ -26,10 +26,12 @@ class AdminUserSerializer(serializers.ModelSerializer):
         ]
         read_only_fields = ["id", "email", "role", "is_staff", "display_name", "status"]
 
-    def get_display_name(self, obj):
+    @extend_schema_field(serializers.CharField())
+    def get_display_name(self, obj) -> str:
         return obj.email
 
-    def get_status(self, obj):
+    @extend_schema_field(serializers.ChoiceField(choices=["active", "pending", "blocked", "inactive"]))
+    def get_status(self, obj) -> str:
         if obj.is_blocked:
             return "blocked"
         if not obj.is_approved and obj.role == "doctor":
@@ -39,9 +41,9 @@ class AdminUserSerializer(serializers.ModelSerializer):
         return "active"
 
 
-# SPECIALTY
+# SPECIALTY (admin view — includes doctor_count annotation)
 
-class SpecialtySerializer(serializers.ModelSerializer):
+class AdminSpecialtySerializer(serializers.ModelSerializer):
     doctor_count = serializers.IntegerField(read_only=True)
 
     class Meta:

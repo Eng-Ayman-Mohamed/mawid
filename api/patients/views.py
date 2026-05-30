@@ -4,6 +4,7 @@ from rest_framework.exceptions import ValidationError
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
+from drf_spectacular.utils import extend_schema
 
 from doctors.models import Doctor
 from .models import Patient, Appointment
@@ -62,6 +63,10 @@ class AppointmentView(generics.ListCreateAPIView):
             serializer.save(patient=patient_profile)
 
 
+@extend_schema(
+    request=None,
+    responses={200: {'type': 'object', 'properties': {'message': {'type': 'string'}, 'status': {'type': 'string'}}}}
+)
 class CancelAppointmentView(APIView):
     permission_classes = [IsAuthenticated, IsPatientRole]
 

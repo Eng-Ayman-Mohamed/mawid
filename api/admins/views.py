@@ -6,6 +6,7 @@ from rest_framework.response import Response
 from rest_framework.views import APIView
 from rest_framework.filters import SearchFilter, OrderingFilter
 from django_filters.rest_framework import DjangoFilterBackend
+from drf_spectacular.utils import extend_schema
 
 from users.models import CustomUser
 from users.permissions import IsAdminRole
@@ -14,11 +15,15 @@ from patients.models import Appointment, Patient
 
 from .serializers import (
     AdminUserSerializer,
-    SpecialtySerializer,
+    AdminSpecialtySerializer,
     AdminAppointmentSerializer
 )
 
 
+@extend_schema(responses={200: {'type': 'object', 'properties': {
+    'stats': {'type': 'object'},
+    'monthly': {'type': 'array', 'items': {'type': 'object'}},
+}}})
 class AdminDashboardView(APIView):
     permission_classes = [IsAdminRole]
 
@@ -98,17 +103,16 @@ class AdminUserViewSet(viewsets.ModelViewSet):
         return Response({"message": "User unblocked successfully"})
 
 
-# SPECIALTY CRUD
+# SPECIALTY CRUD (admin)
 
 class SpecialtyViewSet(viewsets.ModelViewSet):
     queryset = Specialty.objects.annotate(doctor_count=Count("doctor")).order_by("name")
-    serializer_class = SpecialtySerializer
+    serializer_class = AdminSpecialtySerializer
     permission_classes = [IsAdminRole]
     filter_backends = [SearchFilter, OrderingFilter]
     search_fields = ["name"]
     ordering_fields = ["name", "doctor_count"]
     ordering = ["name"]
-
 
 
 #  VIEW ALL APPOINTMENTS
