@@ -1,23 +1,31 @@
 import { Link } from 'react-router';
-import { Calendar, Users, Shield, Star, ChevronRight } from 'lucide-react';
+import { Calendar, Users, Shield, Star, ChevronRight, Stethoscope, ShieldCheck } from 'lucide-react';
 import { Button } from '../../components/ui/button';
 import { Card, CardContent } from '../../components/ui/card';
 import { Avatar, AvatarImage, AvatarFallback } from '../../components/ui/avatar';
-import { Header } from '../../components/Header';
+import { NavBar } from '../../components/NavBar';
+import { DoctorCardSkeleton } from '../../components/Skeletons';
 import { useMedicalApp } from '../../context/MedicalAppContext';
 import { translations } from '../../utils/translations';
-import { mockDoctors } from '../../data/mockData';
+import { apiService } from '../../apiService';
+import { useApiCall } from '../../hooks/useApiCall';
 
 export function PatientLanding() {
   const { language } = useMedicalApp();
   const t = translations[language];
   const isRTL = language === 'ar';
 
+  const { data: doctors, loading: doctorsLoading } = useApiCall(
+    () => apiService.getDoctors(),
+    []
+  );
+  const topDoctors = (doctors || []).slice(0, 3);
+
   const features = [
     {
       icon: Calendar,
       title: language === 'en' ? 'Easy Booking' : 'حجز سهل',
-      description: language === 'en' 
+      description: language === 'en'
         ? 'Book appointments with top doctors in just a few clicks'
         : 'احجز مواعيد مع أفضل الأطباء ببضع نقرات فقط',
     },
@@ -37,57 +45,28 @@ export function PatientLanding() {
     },
   ];
 
-  const topDoctors = mockDoctors.slice(0, 3);
+  const navLinks = [
+    { label: t.home, to: '/' },
+    { label: t.doctors, to: '/doctors' },
+    { label: t.appointments, to: '/my-appointments' },
+  ];
+
+  const navActions = [
+    { label: t.login, to: '/login', variant: 'ghost' as const },
+    { label: t.register, to: '/register', variant: 'default' as const },
+  ];
 
   return (
     <div className="min-h-screen bg-background">
-      {/* Navigation */}
-      <nav className="border-b bg-card">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex items-center justify-between h-16">
-            <div className="flex items-center gap-8">
-              <Link to="/" className="flex items-center gap-2">
-                <div className="w-8 h-8 bg-primary rounded-lg flex items-center justify-center">
-                  <span className="text-primary-foreground font-bold">M</span>
-                </div>
-                <span className="font-semibold">
-                  {language === 'en' ? 'MediCare' : 'ميديكير'}
-                </span>
-              </Link>
-              <div className="hidden md:flex items-center gap-6">
-                <Link to="/" className="text-sm hover:text-primary transition-colors">
-                  {t.home}
-                </Link>
-                <Link to="/doctors" className="text-sm hover:text-primary transition-colors">
-                  {t.doctors}
-                </Link>
-                <Link to="/my-appointments" className="text-sm hover:text-primary transition-colors">
-                  {t.appointments}
-                </Link>
-              </div>
-            </div>
-            <div className="flex items-center gap-4">
-              <Header />
-              <Link to="/login">
-                <Button variant="ghost">{t.login}</Button>
-              </Link>
-              <Link to="/register">
-                <Button>{t.register}</Button>
-              </Link>
-            </div>
-          </div>
-        </div>
-      </nav>
+      <NavBar links={navLinks} actions={navActions} />
 
-      {/* Hero Section */}
+      {/* Hero */}
       <section className="bg-gradient-to-br from-primary/10 via-accent/5 to-background py-20">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="grid md:grid-cols-2 gap-12 items-center">
             <div>
-              <h1 className="text-4xl md:text-5xl font-bold mb-6">
-                {language === 'en' 
-                  ? 'Your Health, Our Priority'
-                  : 'صحتك، أولويتنا'}
+              <h1 className="text-4xl md:text-5xl font-bold mb-6 leading-tight">
+                {language === 'en' ? 'Your Health, Our Priority' : 'صحتك، أولويتنا'}
               </h1>
               <p className="text-xl text-muted-foreground mb-8">
                 {language === 'en'
@@ -108,18 +87,71 @@ export function PatientLanding() {
                 </Link>
               </div>
             </div>
-            <div className="relative">
+            <div className="relative hidden md:block">
               <img
                 src="https://images.unsplash.com/photo-1576091160399-112ba8d25d1d?w=600&h=500&fit=crop"
                 alt="Medical professionals"
-                className="rounded-2xl shadow-2xl"
+                className="rounded-2xl shadow-2xl w-full"
               />
             </div>
           </div>
         </div>
       </section>
 
-      {/* Features Section */}
+      {/* Role-based CTAs */}
+      <section className="py-12 border-b">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="grid sm:grid-cols-2 gap-6">
+            <Card className="border-primary/30 hover:border-primary transition-colors">
+              <CardContent className="p-6 flex items-center gap-4">
+                <div className="w-14 h-14 bg-primary/10 rounded-xl flex items-center justify-center shrink-0">
+                  <Stethoscope className="h-7 w-7 text-primary" />
+                </div>
+                <div className="flex-1">
+                  <h3 className="font-semibold mb-1">
+                    {language === 'en' ? 'Are you a doctor?' : 'هل أنت طبيب؟'}
+                  </h3>
+                  <p className="text-sm text-muted-foreground mb-3">
+                    {language === 'en'
+                      ? 'Manage your schedule and patient appointments'
+                      : 'أدر جدولك ومواعيد مرضاك'}
+                  </p>
+                  <Link to="/doctor/login">
+                    <Button size="sm" variant="outline">
+                      {language === 'en' ? 'Doctor Login' : 'دخول الأطباء'}
+                    </Button>
+                  </Link>
+                </div>
+              </CardContent>
+            </Card>
+
+            <Card className="border-muted hover:border-primary/30 transition-colors">
+              <CardContent className="p-6 flex items-center gap-4">
+                <div className="w-14 h-14 bg-muted rounded-xl flex items-center justify-center shrink-0">
+                  <ShieldCheck className="h-7 w-7 text-muted-foreground" />
+                </div>
+                <div className="flex-1">
+                  <h3 className="font-semibold mb-1">
+                    {language === 'en' ? 'Platform Admin?' : 'مسؤول المنصة؟'}
+                  </h3>
+                  <p className="text-sm text-muted-foreground mb-3">
+                    {language === 'en'
+                      ? 'Manage users, doctors and appointments'
+                      : 'إدارة المستخدمين والأطباء والمواعيد'}
+                  </p>
+                  <Link to="/admin/login">
+                    <Button size="sm" variant="outline">
+                      {language === 'en' ? 'Admin Login' : 'دخول الإدارة'}
+                    </Button>
+                  </Link>
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+        </div>
+      </section>
+
+      {/* Features */}
       <section className="py-20">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-12">
@@ -130,10 +162,10 @@ export function PatientLanding() {
                 : 'نحن نقدم خدمات رعاية صحية شاملة مع التركيز على الجودة ورضا المرضى.'}
             </p>
           </div>
-          <div className="grid md:grid-cols-3 gap-8">
+          <div className="grid sm:grid-cols-2 md:grid-cols-3 gap-8">
             {features.map((feature, index) => (
               <Card key={index} className="text-center">
-                <CardContent className="pt-6">
+                <CardContent className="pt-6 pb-6">
                   <div className="inline-flex items-center justify-center w-16 h-16 bg-primary/10 rounded-full mb-4">
                     <feature.icon className="h-8 w-8 text-primary" />
                   </div>
@@ -146,10 +178,10 @@ export function PatientLanding() {
         </div>
       </section>
 
-      {/* Top Doctors Section */}
+      {/* Top Doctors — live API */}
       <section className="py-20 bg-muted/30">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex items-center justify-between mb-12">
+          <div className="flex flex-wrap items-center justify-between gap-4 mb-12">
             <div>
               <h2 className="text-3xl font-bold mb-2">{t.topDoctors}</h2>
               <p className="text-muted-foreground">
@@ -165,42 +197,54 @@ export function PatientLanding() {
               </Button>
             </Link>
           </div>
-          <div className="grid md:grid-cols-3 gap-8">
-            {topDoctors.map((doctor) => (
-              <Card key={doctor.id} className="hover:shadow-lg transition-shadow">
-                <CardContent className="p-6">
-                  <div className="flex flex-col items-center text-center">
-                    <Avatar className="h-24 w-24 mb-4">
-                      <AvatarImage src={doctor.image} alt={language === 'en' ? doctor.name : doctor.nameAr} />
-                      <AvatarFallback>{doctor.name.charAt(0)}</AvatarFallback>
-                    </Avatar>
-                    <h3 className="font-semibold mb-1">
-                      {language === 'en' ? doctor.name : doctor.nameAr}
-                    </h3>
-                    <p className="text-sm text-muted-foreground mb-3">
-                      {language === 'en' ? doctor.specialty : doctor.specialtyAr}
-                    </p>
-                    <div className="flex items-center gap-1 mb-4">
-                      <Star className="h-4 w-4 fill-yellow-400 text-yellow-400" />
-                      <span className="font-semibold">{doctor.rating}</span>
-                      <span className="text-sm text-muted-foreground">
-                        ({doctor.patients} {language === 'en' ? 'patients' : 'مريض'})
-                      </span>
+
+          {doctorsLoading ? (
+            <div className="grid sm:grid-cols-2 md:grid-cols-3 gap-8">
+              {[0, 1, 2].map((i) => <DoctorCardSkeleton key={i} />)}
+            </div>
+          ) : topDoctors.length === 0 ? (
+            <p className="text-center text-muted-foreground py-12">
+              {language === 'en' ? 'No doctors available yet.' : 'لا يوجد أطباء متاحون بعد.'}
+            </p>
+          ) : (
+            <div className="grid sm:grid-cols-2 md:grid-cols-3 gap-8">
+              {topDoctors.map((doctor) => (
+                <Card key={doctor.id} className="hover:shadow-lg transition-shadow">
+                  <CardContent className="p-6">
+                    <div className="flex flex-col items-center text-center">
+                      <Avatar className="h-24 w-24 mb-4">
+                        <AvatarImage src={doctor.image} alt={doctor.name} />
+                        <AvatarFallback>{doctor.name.charAt(0)}</AvatarFallback>
+                      </Avatar>
+                      <h3 className="font-semibold mb-1">
+                        {language === 'en' ? doctor.name : doctor.nameAr}
+                      </h3>
+                      <p className="text-sm text-muted-foreground mb-3">
+                        {language === 'en' ? doctor.specialty : doctor.specialtyAr}
+                      </p>
+                      {doctor.experience > 0 && (
+                        <div className="flex items-center gap-1 mb-4 text-sm text-muted-foreground">
+                          <Star className="h-4 w-4 text-yellow-400" />
+                          <span>
+                            {doctor.experience} {language === 'en' ? 'yrs exp.' : 'سنة خبرة'}
+                          </span>
+                        </div>
+                      )}
+                      <Link to={`/doctors/${doctor.id}`} className="w-full">
+                        <Button className="w-full" size="sm">
+                          {language === 'en' ? 'View Profile' : 'عرض الملف'}
+                        </Button>
+                      </Link>
                     </div>
-                    <Link to={`/doctors/${doctor.id}`} className="w-full">
-                      <Button className="w-full" size="sm">
-                        {language === 'en' ? 'View Profile' : 'عرض الملف'}
-                      </Button>
-                    </Link>
-                  </div>
-                </CardContent>
-              </Card>
-            ))}
-          </div>
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
+          )}
         </div>
       </section>
 
-      {/* CTA Section */}
+      {/* CTA banner */}
       <section className="py-20 bg-primary text-primary-foreground">
         <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
           <h2 className="text-3xl font-bold mb-4">
@@ -213,37 +257,42 @@ export function PatientLanding() {
               ? 'Join thousands of patients who trust us with their healthcare needs.'
               : 'انضم إلى آلاف المرضى الذين يثقون بنا لتلبية احتياجاتهم الصحية.'}
           </p>
-          <Link to="/register">
-            <Button size="lg" variant="secondary">
-              {t.register}
-            </Button>
-          </Link>
+          <div className="flex flex-wrap gap-4 justify-center">
+            <Link to="/register">
+              <Button size="lg" variant="secondary">
+                {language === 'en' ? 'Sign up as Patient' : 'سجّل كمريض'}
+              </Button>
+            </Link>
+            <Link to="/doctor/login">
+              <Button
+                size="lg"
+                variant="outline"
+                className="border-primary-foreground/40 text-primary-foreground hover:bg-primary-foreground/10"
+              >
+                {language === 'en' ? 'Sign in as Doctor' : 'دخول كطبيب'}
+              </Button>
+            </Link>
+          </div>
         </div>
       </section>
 
       {/* Footer */}
       <footer className="bg-card border-t py-12">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="grid md:grid-cols-4 gap-8">
+          <div className="grid sm:grid-cols-2 md:grid-cols-4 gap-8">
             <div>
               <div className="flex items-center gap-2 mb-4">
                 <div className="w-8 h-8 bg-primary rounded-lg flex items-center justify-center">
-                  <span className="text-primary-foreground font-bold">M</span>
+                  <span className="text-primary-foreground font-bold text-sm">م</span>
                 </div>
-                <span className="font-semibold">
-                  {language === 'en' ? 'MediCare' : 'ميديكير'}
-                </span>
+                <span className="font-semibold">{language === 'en' ? 'Mawid' : 'مواعيد'}</span>
               </div>
               <p className="text-sm text-muted-foreground">
-                {language === 'en'
-                  ? 'Your trusted healthcare partner.'
-                  : 'شريكك الموثوق في الرعاية الصحية.'}
+                {language === 'en' ? 'Your trusted healthcare partner.' : 'شريكك الموثوق في الرعاية الصحية.'}
               </p>
             </div>
             <div>
-              <h4 className="font-semibold mb-4">
-                {language === 'en' ? 'Quick Links' : 'روابط سريعة'}
-              </h4>
+              <h4 className="font-semibold mb-4">{language === 'en' ? 'Quick Links' : 'روابط سريعة'}</h4>
               <div className="space-y-2">
                 <Link to="/doctors" className="block text-sm text-muted-foreground hover:text-primary">
                   {t.doctors}
@@ -254,9 +303,7 @@ export function PatientLanding() {
               </div>
             </div>
             <div>
-              <h4 className="font-semibold mb-4">
-                {language === 'en' ? 'For Doctors' : 'للأطباء'}
-              </h4>
+              <h4 className="font-semibold mb-4">{language === 'en' ? 'For Doctors' : 'للأطباء'}</h4>
               <div className="space-y-2">
                 <Link to="/doctor/login" className="block text-sm text-muted-foreground hover:text-primary">
                   {language === 'en' ? 'Doctor Login' : 'دخول الأطباء'}
@@ -264,9 +311,7 @@ export function PatientLanding() {
               </div>
             </div>
             <div>
-              <h4 className="font-semibold mb-4">
-                {language === 'en' ? 'Admin' : 'الإدارة'}
-              </h4>
+              <h4 className="font-semibold mb-4">{language === 'en' ? 'Admin' : 'الإدارة'}</h4>
               <div className="space-y-2">
                 <Link to="/admin/login" className="block text-sm text-muted-foreground hover:text-primary">
                   {language === 'en' ? 'Admin Login' : 'دخول المسؤولين'}
@@ -275,7 +320,9 @@ export function PatientLanding() {
             </div>
           </div>
           <div className="border-t mt-8 pt-8 text-center text-sm text-muted-foreground">
-            <p>© 2026 {language === 'en' ? 'MediCare. All rights reserved.' : 'ميديكير. جميع الحقوق محفوظة.'}</p>
+            <p>
+              © 2026 {language === 'en' ? 'Mawid. All rights reserved.' : 'مواعيد. جميع الحقوق محفوظة.'}
+            </p>
           </div>
         </div>
       </footer>
