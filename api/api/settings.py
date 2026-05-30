@@ -1,6 +1,9 @@
 from pathlib import Path
 from datetime import timedelta
 import os
+from dotenv import load_dotenv
+
+load_dotenv(Path(__file__).resolve().parent.parent / '.env')
 
 # ─── Paths ────────────────────────────────────────────────────────────────────
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -76,28 +79,17 @@ TEMPLATES = [
 
 
 # ─── Database ─────────────────────────────────────────────────────────────────
-if DEBUG:
-    DATABASES = {
-        'default': {
-            'ENGINE':   'django.db.backends.postgresql',
-            'NAME':     'mawid_dev',
-            'USER':     'postgres',
-            'PASSWORD': 'postgres',
-            'HOST':     'localhost',
-            'DISABLE_SERVER_SIDE_CURSORS': True
-        }
+DATABASES = {
+    'default': {
+        'ENGINE':   'django.db.backends.postgresql',
+        'NAME':     os.environ.get('DB_NAME', 'mawid_dev'),
+        'USER':     os.environ.get('DB_USER', 'iti'),
+        'PASSWORD': os.environ.get('DB_PASSWORD', '33590495'),
+        'HOST':     os.environ.get('DB_HOST', 'localhost'),
+        'PORT':     os.environ.get('DB_PORT', '5432'),
+        'DISABLE_SERVER_SIDE_CURSORS': True,
     }
-else:
-    DATABASES = {
-        'default': {
-            'ENGINE':   'django.db.backends.postgresql',
-            'NAME':     os.environ.get('DB_NAME'),
-            'USER':     os.environ.get('DB_USER'),
-            'PASSWORD': os.environ.get('DB_PASSWORD'),
-            'HOST':     os.environ.get('DB_HOST'),
-            'DISABLE_SERVER_SIDE_CURSORS': True
-        }
-    }
+}
 
 
 # ─── Auth ─────────────────────────────────────────────────────────────────────
