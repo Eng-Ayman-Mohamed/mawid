@@ -2,10 +2,10 @@ from rest_framework import viewsets, permissions, filters, generics, status
 from rest_framework.decorators import action
 from rest_framework.response import Response
 from django_filters.rest_framework import DjangoFilterBackend
-from .models import Doctor, DoctorAvailability
+from .models import Doctor, DoctorAvailability, Specialty
 from .serializers import (
     DoctorSerializer, DoctorAvailabilitySerializer,
-    DoctorProfileUpdateSerializer, AppointmentStatusSerializer
+    DoctorProfileUpdateSerializer, AppointmentStatusSerializer, SpecialtySerializer
 )
 from patients.models import Appointment
 from .serializers import AppointmentSerializer
@@ -56,6 +56,17 @@ class DoctorAppointmentListView(generics.ListAPIView):
         return Appointment.objects.filter(
             doctor=self.request.user.doctor_profile
         ).select_related('patient__user').order_by('-appointment_date')
+
+
+# ─── GET /api/specialties/ — public list; POST/PUT/DELETE — admin only
+class SpecialtyViewSet(viewsets.ModelViewSet):
+    queryset = Specialty.objects.all().order_by('name')
+    serializer_class = SpecialtySerializer
+
+    def get_permissions(self):
+        if self.action == 'list' or self.action == 'retrieve':
+            return [permissions.AllowAny()]
+        return [IsAdminRole()]
 
 
 # ─── 7. PATCH /api/appointments/{id}/status/ — Confirm / reject + notes

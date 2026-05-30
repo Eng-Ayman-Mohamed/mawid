@@ -46,7 +46,7 @@ class SpecialtySerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Specialty
-        fields = ["id", "name", "doctor_count"]
+        fields = ["id", "name", "description", "doctor_count"]
 
 
 # APPOINTMENTS

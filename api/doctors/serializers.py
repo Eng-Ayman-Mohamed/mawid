@@ -1,8 +1,15 @@
 from rest_framework import serializers
-from .models import Doctor, DoctorAvailability
+from .models import Doctor, DoctorAvailability, Specialty
 from patients.models import Appointment
 from users.serializers import UserSerializer
 from patients.serializers import PatientProfileSerializer
+
+
+# ─── Specialty serializer (public read, admin write)
+class SpecialtySerializer(serializers.ModelSerializer):
+    class Meta:
+        model  = Specialty
+        fields = ['id', 'name', 'description']
 
 
 # ─── Availability serializer
@@ -20,14 +27,14 @@ class DoctorSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Doctor
-        fields = ['id', 'user', 'specialty', 'bio', 'phone', 'profile_picture', 'years_of_experience', 'availability']
+        fields = ['id', 'user', 'specialty', 'bio', 'contact', 'profile_picture', 'years_of_experience', 'availability']
 
 
 # ─── Doctor updates only these fields on their own profile
 class DoctorProfileUpdateSerializer(serializers.ModelSerializer):
     class Meta:
         model = Doctor
-        fields = ['bio', 'phone', 'years_of_experience', 'profile_picture']
+        fields = ['bio', 'contact', 'years_of_experience', 'profile_picture']
 
 
 # ─── Appointment serializer used in doctor views
