@@ -5,10 +5,12 @@ from rest_framework.permissions import IsAuthenticated, AllowAny
 from rest_framework_simplejwt.tokens import RefreshToken
 from rest_framework_simplejwt.exceptions import TokenError
 from django.contrib.auth import authenticate
+from drf_spectacular.utils import extend_schema
 from .models import UserRole
 from .serializers import RegisterSerializer, UserSerializer
 
 
+@extend_schema(request=RegisterSerializer, responses={201: UserSerializer})
 class RegisterView(APIView):
     permission_classes = [AllowAny]
 
@@ -25,6 +27,13 @@ class RegisterView(APIView):
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
+@extend_schema(
+    request={'application/json': {'type': 'object', 'properties': {
+        'email': {'type': 'string', 'format': 'email'},
+        'password': {'type': 'string'},
+    }, 'required': ['email', 'password']}},
+    responses={200: UserSerializer}
+)
 class LoginView(APIView):
     permission_classes = [AllowAny]
 
@@ -48,6 +57,12 @@ class LoginView(APIView):
         })
 
 
+@extend_schema(
+    request={'application/json': {'type': 'object', 'properties': {
+        'refresh': {'type': 'string'},
+    }, 'required': ['refresh']}},
+    responses={205: None}
+)
 class LogoutView(APIView):
     permission_classes = [IsAuthenticated]
 
@@ -60,6 +75,7 @@ class LogoutView(APIView):
             return Response({'error': 'Invalid or missing token'}, status=status.HTTP_400_BAD_REQUEST)
 
 
+@extend_schema(responses={200: UserSerializer})
 class MeView(APIView):
     permission_classes = [IsAuthenticated]
 

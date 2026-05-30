@@ -39,6 +39,7 @@ class DoctorAvailabilityViewSet(viewsets.ModelViewSet):
     serializer_class = DoctorAvailabilitySerializer
     permission_classes = [IsDoctorRole]
     http_method_names = ['get', 'post', 'delete']  # no PUT/PATCH on slots
+    lookup_value_regex = r'[0-9]+'
 
     def get_queryset(self):
         return DoctorAvailability.objects.filter(doctor__user=self.request.user)
