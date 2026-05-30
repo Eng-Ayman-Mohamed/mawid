@@ -32,7 +32,6 @@ def make_doctor(email='doctor@test.com', approved=True):
     specialty, _ = Specialty.objects.get_or_create(name='General')
     user = make_user(email, role=UserRole.DOCTOR, is_approved=approved)
     doctor = Doctor.objects.create(user=user, specialty=specialty)
-    # Monday availability 09:00–17:00
     DoctorAvailability.objects.create(
         doctor=doctor, day='MON', start_time=time(9, 0), end_time=time(17, 0)
     )
@@ -55,12 +54,19 @@ class RegisterTests(TestCase):
 
     def test_register_patient_success(self):
         res = self.client.post(self.url, {
-            'email': 'patient@test.com', 'password': 'pass1234', 'role': 'patient'
+            'email': 'patient@test.com', 'password': 'pass1234', 'role': 'patient',
+            'first_name': 'Ali', 'last_name': 'Hassan',
         })
         self.assertEqual(res.status_code, status.HTTP_201_CREATED)
         self.assertIn('access', res.data)
-        self.assertIn('refresh', res.data)
-        self.assertEqual(res.data['user']['role'], 'patient')
+        self.assertEqual(res.data['user']['first_name'], 'Ali')
+        self.assertEqual(res.data['user']['last_name'], 'Hassan')
+
+    def test_register_without_name_still_succeeds(self):
+        res = self.client.post(self.url, {
+            'email': 'noname@test.com', 'password': 'pass1234', 'role': 'patient'
+        })
+        self.assertEqual(res.status_code, status.HTTP_201_CREATED)
 
     def test_register_doctor_success(self):
         res = self.client.post(self.url, {
@@ -150,11 +156,13 @@ class LogoutTests(TestCase):
 
 
 class MeTests(TestCase):
-    def test_me_returns_user_data(self):
-        user = make_user('me@test.com')
+    def test_me_returns_user_data_with_name(self):
+        user = make_user('me@test.com', first_name='Sara', last_name='Ahmed')
         res = auth_client(user).get('/api/auth/me/')
         self.assertEqual(res.status_code, status.HTTP_200_OK)
         self.assertEqual(res.data['email'], 'me@test.com')
+        self.assertEqual(res.data['first_name'], 'Sara')
+        self.assertEqual(res.data['last_name'], 'Ahmed')
 
     def test_me_unauthenticated_rejected(self):
         res = APIClient().get('/api/auth/me/')
@@ -164,10 +172,10 @@ class MeTests(TestCase):
 # ─── Booking Tests ────────────────────────────────────────────────────────────
 
 class BookAppointmentTests(TestCase):
-    url = '/api/patients/appointments/book/'
+    url = '/api/appointments/'
 
     def setUp(self):
-        self.patient_user = make_user('patient@test.com')
+        self.patient_user = make_user('patient@test.com', first_name='Ali', last_name='Hassan')
         self.patient = Patient.objects.create(user=self.patient_user)
         self.doctor = make_doctor()
         self.client = auth_client(self.patient_user)
@@ -183,13 +191,36 @@ class BookAppointmentTests(TestCase):
         self.assertEqual(res.status_code, status.HTTP_201_CREATED)
         self.assertEqual(res.data['status'], 'pending')
 
+    def test_book_without_name_provides_name_inline(self):
+        self.patient_user.first_name = ''
+        self.patient_user.last_name = ''
+        self.patient_user.save()
+        payload = {**self.payload, 'first_name': 'Omar', 'last_name': 'Saleh'}
+        res = self.client.post(self.url, payload)
+        self.assertEqual(res.status_code, status.HTTP_201_CREATED)
+        self.patient_user.refresh_from_db()
+        self.assertEqual(self.patient_user.first_name, 'Omar')
+        self.assertEqual(self.patient_user.last_name, 'Saleh')
+
+    def test_book_without_name_and_no_inline_name_rejected(self):
+        self.patient_user.first_name = ''
+        self.patient_user.last_name = ''
+        self.patient_user.save()
+        res = self.client.post(self.url, self.payload)
+        self.assertEqual(res.status_code, status.HTTP_400_BAD_REQUEST)
+
+    def test_get_appointment_list(self):
+        self.client.post(self.url, self.payload)
+        res = self.client.get(self.url)
+        self.assertEqual(res.status_code, status.HTTP_200_OK)
+        self.assertEqual(len(res.data), 1)
+
     def test_duplicate_slot_rejected(self):
         self.client.post(self.url, self.payload)
         res = self.client.post(self.url, self.payload)
         self.assertEqual(res.status_code, status.HTTP_400_BAD_REQUEST)
 
     def test_doctor_unavailable_day_rejected(self):
-        # Find a non-Monday
         sunday = self.monday + timedelta(days=6)
         payload = {**self.payload, 'appointment_date': str(sunday)}
         res = self.client.post(self.url, payload)
@@ -203,7 +234,7 @@ class BookAppointmentTests(TestCase):
     def test_cancelled_slot_can_be_rebooked(self):
         res = self.client.post(self.url, self.payload)
         appt_id = res.data['id']
-        self.client.post(f'/api/patients/appointments/{appt_id}/cancel/')
+        self.client.patch(f'/api/appointments/{appt_id}/cancel/')
         res2 = self.client.post(self.url, self.payload)
         self.assertEqual(res2.status_code, status.HTTP_201_CREATED)
 
@@ -219,7 +250,7 @@ class BookAppointmentTests(TestCase):
 
 class CancelAppointmentTests(TestCase):
     def setUp(self):
-        self.patient_user = make_user('patient@test.com')
+        self.patient_user = make_user('patient@test.com', first_name='Ali', last_name='Hassan')
         self.patient = Patient.objects.create(user=self.patient_user)
         self.doctor = make_doctor()
         self.monday = next_monday()
@@ -231,10 +262,10 @@ class CancelAppointmentTests(TestCase):
             status='pending',
         )
         self.client = auth_client(self.patient_user)
-        self.url = f'/api/patients/appointments/{self.appointment.pk}/cancel/'
+        self.url = f'/api/appointments/{self.appointment.pk}/cancel/'
 
     def test_cancel_pending_appointment(self):
-        res = self.client.post(self.url)
+        res = self.client.patch(self.url)
         self.assertEqual(res.status_code, status.HTTP_200_OK)
         self.appointment.refresh_from_db()
         self.assertEqual(self.appointment.status, 'cancelled')
@@ -242,25 +273,25 @@ class CancelAppointmentTests(TestCase):
     def test_cannot_cancel_already_cancelled(self):
         self.appointment.status = 'cancelled'
         self.appointment.save()
-        res = self.client.post(self.url)
+        res = self.client.patch(self.url)
         self.assertEqual(res.status_code, status.HTTP_400_BAD_REQUEST)
 
     def test_cannot_cancel_completed(self):
         self.appointment.status = 'completed'
         self.appointment.save()
-        res = self.client.post(self.url)
+        res = self.client.patch(self.url)
         self.assertEqual(res.status_code, status.HTTP_400_BAD_REQUEST)
 
     def test_cannot_cancel_another_patients_appointment(self):
         other_user = make_user('other@test.com')
         Patient.objects.create(user=other_user)
-        res = auth_client(other_user).post(self.url)
+        res = auth_client(other_user).patch(self.url)
         self.assertEqual(res.status_code, status.HTTP_404_NOT_FOUND)
 
 
 class RescheduleAppointmentTests(TestCase):
     def setUp(self):
-        self.patient_user = make_user('patient@test.com')
+        self.patient_user = make_user('patient@test.com', first_name='Ali', last_name='Hassan')
         self.patient = Patient.objects.create(user=self.patient_user)
         self.doctor = make_doctor()
         self.monday = next_monday()
@@ -272,7 +303,7 @@ class RescheduleAppointmentTests(TestCase):
             status='pending',
         )
         self.client = auth_client(self.patient_user)
-        self.url = f'/api/patients/appointments/{self.appointment.pk}/reschedule/'
+        self.url = f'/api/appointments/{self.appointment.pk}/reschedule/'
 
     def test_reschedule_to_valid_slot(self):
         next_week_monday = self.monday + timedelta(days=7)
@@ -308,7 +339,6 @@ class PermissionTests(TestCase):
         self.assertEqual(res.status_code, status.HTTP_403_FORBIDDEN)
 
     def test_patient_cannot_access_doctor_appointments(self):
-        # Router's {pk} pattern shadows doctors/appointments/, so 404 is also acceptable
         res = auth_client(self.patient_user).get('/api/doctors/doctors/appointments/')
         self.assertIn(res.status_code, [status.HTTP_403_FORBIDDEN, status.HTTP_404_NOT_FOUND])
 
@@ -317,7 +347,7 @@ class PermissionTests(TestCase):
         self.assertEqual(res.status_code, status.HTTP_401_UNAUTHORIZED)
 
     def test_unauthenticated_cannot_list_appointments(self):
-        res = APIClient().get('/api/patients/appointments/')
+        res = APIClient().get('/api/appointments/')
         self.assertEqual(res.status_code, status.HTTP_401_UNAUTHORIZED)
 
     def test_patient_can_access_own_profile(self):
@@ -330,7 +360,7 @@ class PermissionTests(TestCase):
 
 class AppointmentEmailSignalTests(TestCase):
     def setUp(self):
-        self.patient_user = make_user('patient@test.com')
+        self.patient_user = make_user('patient@test.com', first_name='Ali', last_name='Hassan')
         self.patient = Patient.objects.create(user=self.patient_user)
         self.doctor = make_doctor()
         self.monday = next_monday()

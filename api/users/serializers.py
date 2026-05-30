@@ -7,7 +7,7 @@ class RegisterSerializer(serializers.ModelSerializer):
 
     class Meta:
         model  = CustomUser
-        fields = ['email', 'password', 'role']
+        fields = ['email', 'password', 'role', 'first_name', 'last_name']
 
     def validate_role(self, value):
         if value == UserRole.ADMIN:
@@ -21,4 +21,4 @@ class RegisterSerializer(serializers.ModelSerializer):
 class UserSerializer(serializers.ModelSerializer):
     class Meta:
         model  = CustomUser
-        fields = ['id', 'email', 'role', 'is_approved', 'is_blocked']
+        fields = ['id', 'email', 'first_name', 'last_name', 'role', 'is_approved', 'is_blocked']

@@ -21,20 +21,36 @@ class PatientProfileView(generics.RetrieveUpdateAPIView):
         return patient_profile
 
 
-class BookAppointmentView(generics.CreateAPIView):
+class AppointmentView(generics.ListCreateAPIView):
     serializer_class = AppointmentBookingSerializer
     permission_classes = [IsAuthenticated, IsPatientRole]
 
-    def perform_create(self, serializer):
-        with transaction.atomic():
-            doctor = serializer.validated_data['doctor']
-            appt_date = serializer.validated_data['appointment_date']
-            appt_time = serializer.validated_data['appointment_time']
+    def get_queryset(self):
+        patient_profile = Patient.objects.get(user=self.request.user)
+        return Appointment.objects.filter(patient=patient_profile).order_by('appointment_date', 'appointment_time')
 
-            # Layer 3 — acquire a row lock on the doctor to serialise concurrent requests
+    def perform_create(self, serializer):
+        user = self.request.user
+        first_name = serializer.validated_data.pop('first_name', '').strip()
+        last_name  = serializer.validated_data.pop('last_name', '').strip()
+
+        update_fields = []
+        if first_name and not user.first_name:
+            user.first_name = first_name
+            update_fields.append('first_name')
+        if last_name and not user.last_name:
+            user.last_name = last_name
+            update_fields.append('last_name')
+        if update_fields:
+            user.save(update_fields=update_fields)
+
+        with transaction.atomic():
+            doctor     = serializer.validated_data['doctor']
+            appt_date  = serializer.validated_data['appointment_date']
+            appt_time  = serializer.validated_data['appointment_time']
+
             Doctor.objects.select_for_update().get(pk=doctor.pk)
 
-            # Re-check for a conflict under the lock (guards against race conditions)
             if Appointment.objects.filter(
                 doctor=doctor,
                 appointment_date=appt_date,
@@ -42,14 +58,14 @@ class BookAppointmentView(generics.CreateAPIView):
             ).exclude(status='cancelled').exists():
                 raise ValidationError("This doctor is already booked at the same time and date.")
 
-            patient_profile = Patient.objects.get(user=self.request.user)
+            patient_profile = Patient.objects.get(user=user)
             serializer.save(patient=patient_profile)
 
 
 class CancelAppointmentView(APIView):
     permission_classes = [IsAuthenticated, IsPatientRole]
 
-    def post(self, request, pk):
+    def patch(self, request, pk):
         try:
             patient_profile = Patient.objects.get(user=request.user)
             appointment = Appointment.objects.get(pk=pk, patient=patient_profile)
@@ -76,6 +92,7 @@ class CancelAppointmentView(APIView):
 class RescheduleAppointmentView(generics.UpdateAPIView):
     serializer_class = AppointmentRescheduleSerializer
     permission_classes = [IsAuthenticated, IsPatientRole, IsOwnerOrAdmin]
+    http_method_names = ['patch']
 
     def get_queryset(self):
         patient_profile = Patient.objects.get(user=self.request.user)
@@ -83,12 +100,3 @@ class RescheduleAppointmentView(generics.UpdateAPIView):
 
     def perform_update(self, serializer):
         serializer.save(status='pending')
-
-
-class PatientAppointmentListView(generics.ListAPIView):
-    serializer_class = AppointmentBookingSerializer
-    permission_classes = [IsAuthenticated, IsPatientRole]
-
-    def get_queryset(self):
-        patient_profile = Patient.objects.get(user=self.request.user)
-        return Appointment.objects.filter(patient=patient_profile).order_by('appointment_date', 'appointment_time')
