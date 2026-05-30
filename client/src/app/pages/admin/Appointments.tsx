@@ -1,31 +1,52 @@
 import { Link } from 'react-router';
 import { Search, Calendar, Filter } from 'lucide-react';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Button } from '../../components/ui/button';
 import { Input } from '../../components/ui/input';
-import { Card, CardContent, CardHeader, CardTitle } from '../../components/ui/card';
+import { Card, CardContent, CardHeader } from '../../components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '../../components/ui/table';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../../components/ui/select';
 import { StatusBadge } from '../../components/StatusBadge';
 import { Header } from '../../components/Header';
 import { useMedicalApp } from '../../context/MedicalAppContext';
 import { translations } from '../../utils/translations';
-import { mockAppointments } from '../../data/mockData';
+import { adminService } from './adminService';
+import { toast } from 'sonner';
+
+interface AdminAppointment {
+  id: number;
+  patient: string;
+  doctor: string;
+  specialty: string;
+  appointment_date: string;
+  appointment_time: string;
+  status: 'pending' | 'confirmed' | 'completed' | 'cancelled';
+}
 
 export function AdminAppointments() {
   const { language } = useMedicalApp();
   const t = translations[language];
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
+  const [appointments, setAppointments] = useState<AdminAppointment[]>([]);
 
-  const filteredAppointments = mockAppointments.filter((apt) => {
-    const matchesSearch = language === 'en'
-      ? apt.patientName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        apt.doctorName.toLowerCase().includes(searchTerm.toLowerCase())
-      : apt.patientNameAr.includes(searchTerm) || apt.doctorNameAr.includes(searchTerm);
-    const matchesStatus = statusFilter === 'all' || apt.status === statusFilter;
-    return matchesSearch && matchesStatus;
-  });
+  const loadAppointments = async () => {
+    try {
+      const params: Record<string, string> = {};
+      if (searchTerm) params.search = searchTerm;
+      if (statusFilter !== 'all') params.status = statusFilter;
+
+      const data = await adminService.getAppointments(params);
+      setAppointments(Array.isArray(data) ? data : data.results || []);
+    } catch (error: any) {
+      setAppointments([]);
+      toast.error(error.message || (language === 'en' ? 'Failed to load appointments' : 'فشل تحميل المواعيد'));
+    }
+  };
+
+  useEffect(() => {
+    loadAppointments();
+  }, [searchTerm, statusFilter]);
 
   return (
     <div className="min-h-screen bg-background">
@@ -98,21 +119,15 @@ export function AdminAppointments() {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {filteredAppointments.map((appointment) => (
+                {appointments.map((appointment) => (
                   <TableRow key={appointment.id}>
-                    <TableCell className="font-medium">
-                      {language === 'en' ? appointment.patientName : appointment.patientNameAr}
-                    </TableCell>
+                    <TableCell className="font-medium">{appointment.patient}</TableCell>
+                    <TableCell>{appointment.doctor}</TableCell>
+                    <TableCell>{appointment.specialty}</TableCell>
                     <TableCell>
-                      {language === 'en' ? appointment.doctorName : appointment.doctorNameAr}
+                      {new Date(appointment.appointment_date).toLocaleDateString(language === 'en' ? 'en-US' : 'ar-EG')}
                     </TableCell>
-                    <TableCell>
-                      {language === 'en' ? appointment.specialty : appointment.specialtyAr}
-                    </TableCell>
-                    <TableCell>
-                      {new Date(appointment.date).toLocaleDateString(language === 'en' ? 'en-US' : 'ar-EG')}
-                    </TableCell>
-                    <TableCell>{appointment.time}</TableCell>
+                    <TableCell>{appointment.appointment_time}</TableCell>
                     <TableCell>
                       <StatusBadge status={appointment.status} />
                     </TableCell>
@@ -120,7 +135,7 @@ export function AdminAppointments() {
                 ))}
               </TableBody>
             </Table>
-            {filteredAppointments.length === 0 && (
+            {appointments.length === 0 && (
               <div className="text-center py-8">
                 <Calendar className="h-12 w-12 mx-auto mb-4 text-muted-foreground" />
                 <p className="text-muted-foreground">

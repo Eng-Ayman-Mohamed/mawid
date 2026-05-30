@@ -31,7 +31,9 @@ class DoctorAvailability(models.Model):
     end_time = models.TimeField()
 
     class Meta:
-        unique_together = ('doctor', 'day')  # one slot per day per doctor
+        constraints = [
+            models.UniqueConstraint(fields=['doctor', 'day'], name='unique_doctor_day')
+        ]
 
     def __str__(self):
         return f"{self.doctor} — {self.day} {self.start_time}–{self.end_time}"

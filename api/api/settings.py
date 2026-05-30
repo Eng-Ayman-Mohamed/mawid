@@ -84,6 +84,7 @@ if DEBUG:
             'USER':     'postgres',
             'PASSWORD': 'postgres',
             'HOST':     'localhost',
+            'DISABLE_SERVER_SIDE_CURSORS': True
         }
     }
 else:
@@ -94,6 +95,7 @@ else:
             'USER':     os.environ.get('DB_USER'),
             'PASSWORD': os.environ.get('DB_PASSWORD'),
             'HOST':     os.environ.get('DB_HOST'),
+            'DISABLE_SERVER_SIDE_CURSORS': True
         }
     }
 

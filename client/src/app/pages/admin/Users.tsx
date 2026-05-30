@@ -8,27 +8,58 @@ import { Badge } from '../../components/ui/badge';
 import { Header } from '../../components/Header';
 import { useMedicalApp } from '../../context/MedicalAppContext';
 import { translations } from '../../utils/translations';
-import { mockUsers } from '../../data/mockData';
 import { toast } from 'sonner';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
+import { adminService } from './adminService';
+
+interface AdminUser {
+  id: number;
+  display_name: string;
+  email: string;
+  role: 'patient' | 'doctor' | 'admin';
+  status: 'active' | 'pending' | 'blocked' | 'inactive';
+}
 
 export function AdminUsers() {
   const { language } = useMedicalApp();
   const t = translations[language];
   const [searchTerm, setSearchTerm] = useState('');
+  const [users, setUsers] = useState<AdminUser[]>([]);
 
-  const filteredUsers = mockUsers.filter((user) =>
-    language === 'en'
-      ? user.name.toLowerCase().includes(searchTerm.toLowerCase())
-      : user.nameAr.includes(searchTerm)
-  );
-
-  const handleApprove = (userId: string) => {
-    toast.success(language === 'en' ? 'User approved' : 'تم قبول المستخدم');
+  const loadUsers = () => {
+    adminService
+      .getUsers(searchTerm ? { search: searchTerm } : {})
+      .then((data) => {
+        setUsers(Array.isArray(data) ? data : data.results || []);
+      })
+      .catch(() => {
+        setUsers([]);
+        toast.error(language === 'en' ? 'Failed to load users' : 'Failed to load users');
+      });
   };
 
-  const handleBlock = (userId: string) => {
-    toast.success(language === 'en' ? 'User blocked' : 'تم حظر المستخدم');
+  useEffect(() => {
+    loadUsers();
+  }, [searchTerm]);
+
+  const handleApprove = (userId: number) => {
+    adminService
+      .approveUser(userId)
+      .then(() => {
+        toast.success(language === 'en' ? 'User approved' : 'User approved');
+        loadUsers();
+      })
+      .catch((error) => toast.error(error.message));
+  };
+
+  const handleBlock = (userId: number) => {
+    adminService
+      .blockUser(userId)
+      .then(() => {
+        toast.success(language === 'en' ? 'User blocked' : 'User blocked');
+        loadUsers();
+      })
+      .catch((error) => toast.error(error.message));
   };
 
   return (
@@ -85,16 +116,13 @@ export function AdminUsers() {
                   <TableHead>{t.email}</TableHead>
                   <TableHead>{language === 'en' ? 'Role' : 'الدور'}</TableHead>
                   <TableHead>{language === 'en' ? 'Status' : 'الحالة'}</TableHead>
-                  <TableHead>{language === 'en' ? 'Join Date' : 'تاريخ الانضمام'}</TableHead>
                   <TableHead className="text-right">{language === 'en' ? 'Actions' : 'الإجراءات'}</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {filteredUsers.map((user) => (
+                {users.map((user) => (
                   <TableRow key={user.id}>
-                    <TableCell className="font-medium">
-                      {language === 'en' ? user.name : user.nameAr}
-                    </TableCell>
+                    <TableCell className="font-medium">{user.display_name || user.email}</TableCell>
                     <TableCell>{user.email}</TableCell>
                     <TableCell>
                       <Badge variant="outline" className="capitalize">
@@ -107,9 +135,6 @@ export function AdminUsers() {
                       >
                         {user.status}
                       </Badge>
-                    </TableCell>
-                    <TableCell>
-                      {new Date(user.joinDate).toLocaleDateString(language === 'en' ? 'en-US' : 'ar-EG')}
                     </TableCell>
                     <TableCell className="text-right">
                       <div className="flex gap-2 justify-end">
