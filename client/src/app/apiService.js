@@ -38,7 +38,11 @@ function getResults(data) {
 }
 
 function formatDoctorName(doctor) {
-  return doctor?.user?.email ? `Dr. ${doctor.user.email}` : `Dr. ${doctor?.id || ''}`;
+  const user = doctor?.user;
+  if (user?.first_name || user?.last_name) {
+    return `Dr. ${[user.first_name, user.last_name].filter(Boolean).join(' ')}`;
+  }
+  return user?.email ? `Dr. ${user.email}` : `Dr. ${doctor?.id || ''}`;
 }
 
 function normalizeDoctor(doctor) {
@@ -57,7 +61,7 @@ function normalizeDoctor(doctor) {
     bioAr: doctor.bio || '',
     image: doctor.profile_picture || '',
     available: Boolean(doctor.availability?.length),
-    phone: doctor.phone || '',
+    contact: doctor.contact || '',
     email: doctor.user?.email || '',
     availability: doctor.availability || [],
   };
@@ -97,18 +101,22 @@ export const apiService = {
   },
 
   getDoctors(params = {}) {
-    return api.get('/api/doctors/doctors/', { params }).then((data) => getResults(data).map(normalizeDoctor));
+    return api.get('/api/doctors/', { params }).then((data) => getResults(data).map(normalizeDoctor));
   },
 
   getDoctor(id) {
-    return api.get(`/api/doctors/doctors/${id}/`).then(normalizeDoctor);
+    return api.get(`/api/doctors/${id}/`).then(normalizeDoctor);
   },
 
   getSpecialties() {
-    return this.getDoctors().then((doctors) => {
-      const names = [...new Set(doctors.map((doctor) => doctor.specialty).filter(Boolean))];
-      return names.map((name) => ({ id: name, name, nameAr: name, doctorCount: doctors.filter((doctor) => doctor.specialty === name).length }));
-    });
+    return api.get('/api/specialties/').then((data) =>
+      getResults(data).map((s) => ({
+        id: String(s.id),
+        name: s.name,
+        nameAr: s.name,
+        doctorCount: s.doctor_count || 0,
+      }))
+    );
   },
 
   getPatientProfile() {
@@ -120,32 +128,36 @@ export const apiService = {
   },
 
   bookAppointment(data) {
-    return api.post('/api/patients/appointments/book/', data);
+    return api.post('/api/appointments/', data);
   },
 
   getPatientAppointments() {
     return Promise.all([
-      api.get('/api/patients/appointments/'),
+      api.get('/api/appointments/'),
       this.getDoctors(),
-    ]).then(([appointments, doctors]) => getResults(appointments).map((appointment) => normalizeAppointment(appointment, doctors)));
+    ]).then(([appointments, doctors]) =>
+      getResults(appointments).map((appointment) => normalizeAppointment(appointment, doctors))
+    );
   },
 
   getDoctorProfile() {
-    return api.get('/api/doctors/doctors/profile/').then(normalizeDoctor);
+    return api.get('/api/doctors/profile/').then(normalizeDoctor);
   },
 
   updateDoctorProfile(data) {
-    return api.patch('/api/doctors/doctors/profile/', data);
+    return api.patch('/api/doctors/profile/', data);
   },
 
   getDoctorAppointments() {
     return Promise.all([
-      api.get('/api/doctors/doctors/appointments/'),
+      api.get('/api/doctors/appointments/'),
       this.getDoctors(),
-    ]).then(([appointments, doctors]) => getResults(appointments).map((appointment) => normalizeAppointment(appointment, doctors)));
+    ]).then(([appointments, doctors]) =>
+      getResults(appointments).map((appointment) => normalizeAppointment(appointment, doctors))
+    );
   },
 
   updateDoctorAppointmentStatus(id, data) {
-    return api.patch(`/api/doctors/appointments/${id}/status/`, data);
+    return api.patch(`/api/appointments/${id}/status/`, data);
   },
 };
