@@ -35,16 +35,6 @@ class AppointmentView(generics.ListCreateAPIView):
         first_name = serializer.validated_data.pop('first_name', '').strip()
         last_name  = serializer.validated_data.pop('last_name', '').strip()
 
-        update_fields = []
-        if first_name and not user.first_name:
-            user.first_name = first_name
-            update_fields.append('first_name')
-        if last_name and not user.last_name:
-            user.last_name = last_name
-            update_fields.append('last_name')
-        if update_fields:
-            user.save(update_fields=update_fields)
-
         with transaction.atomic():
             doctor     = serializer.validated_data['doctor']
             appt_date  = serializer.validated_data['appointment_date']
@@ -58,6 +48,16 @@ class AppointmentView(generics.ListCreateAPIView):
                 appointment_time=appt_time,
             ).exclude(status='cancelled').exists():
                 raise ValidationError("This doctor is already booked at the same time and date.")
+
+            update_fields = []
+            if first_name and not user.first_name:
+                user.first_name = first_name
+                update_fields.append('first_name')
+            if last_name and not user.last_name:
+                user.last_name = last_name
+                update_fields.append('last_name')
+            if update_fields:
+                user.save(update_fields=update_fields)
 
             patient_profile = Patient.objects.get(user=user)
             serializer.save(patient=patient_profile)

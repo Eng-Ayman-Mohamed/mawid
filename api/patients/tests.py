@@ -213,7 +213,7 @@ class BookAppointmentTests(TestCase):
         self.client.post(self.url, self.payload)
         res = self.client.get(self.url)
         self.assertEqual(res.status_code, status.HTTP_200_OK)
-        self.assertEqual(len(res.data), 1)
+        self.assertEqual(res.data['count'], 1)
 
     def test_duplicate_slot_rejected(self):
         self.client.post(self.url, self.payload)
