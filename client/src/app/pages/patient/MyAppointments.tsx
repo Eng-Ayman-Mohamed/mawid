@@ -5,11 +5,11 @@ import { Card, CardContent } from '../../components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '../../components/ui/tabs';
 import { Avatar, AvatarFallback } from '../../components/ui/avatar';
 import { StatusBadge } from '../../components/StatusBadge';
-import { NavBar } from '../../components/NavBar';
+
 import { AppointmentListSkeleton } from '../../components/Skeletons';
-import { useMedicalApp } from '../../context/MedicalAppContext';
+import { usePreferences } from '../../context/PreferencesContext';
 import { translations } from '../../utils/translations';
-import { apiService } from '../../apiService';
+import { patientService } from '../../services/patient.service';
 import { useApiCall } from '../../hooks/useApiCall';
 
 type Appointment = {
@@ -72,11 +72,11 @@ function AppointmentCard({ appointment, language }: { appointment: Appointment; 
 }
 
 export function MyAppointments() {
-  const { language } = useMedicalApp();
+  const { language } = usePreferences();
   const t = translations[language];
 
   const { data: appointments, loading } = useApiCall(
-    () => apiService.getPatientAppointments(),
+    () => patientService.getAppointments(),
     []
   );
 
@@ -84,14 +84,6 @@ export function MyAppointments() {
   const upcoming = all.filter((a) => a.status === 'confirmed' || a.status === 'pending');
   const past = all.filter((a) => a.status === 'completed');
   const cancelled = all.filter((a) => a.status === 'cancelled');
-
-  const navLinks = [
-    { label: t.home, to: '/' },
-    { label: t.findDoctor, to: '/doctors' },
-  ];
-  const navActions = [
-    { label: t.profile, to: '/profile', variant: 'outline' as const },
-  ];
 
   const emptyState = (icon: React.ReactNode, msg: string) => (
     <Card>
@@ -103,10 +95,7 @@ export function MyAppointments() {
   );
 
   return (
-    <div className="min-h-screen bg-background">
-      <NavBar links={navLinks} actions={navActions} />
-
-      <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+    <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <div className="flex flex-wrap items-center justify-between gap-4 mb-6">
           <div>
             <h1 className="text-3xl font-bold mb-2">{t.myAppointments}</h1>
@@ -170,6 +159,5 @@ export function MyAppointments() {
           </Tabs>
         )}
       </div>
-    </div>
   );
 }

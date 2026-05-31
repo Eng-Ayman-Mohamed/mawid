@@ -1,4 +1,4 @@
-import { Link, useParams, useNavigate } from 'react-router';
+import { useParams, useNavigate } from 'react-router';
 import { useState } from 'react';
 import { ChevronLeft, Calendar as CalendarIcon } from 'lucide-react';
 import { Button } from '../../components/ui/button';
@@ -7,15 +7,14 @@ import { Calendar } from '../../components/ui/calendar';
 import { Badge } from '../../components/ui/badge';
 import { Textarea } from '../../components/ui/textarea';
 import { Label } from '../../components/ui/label';
-import { Header } from '../../components/Header';
-import { useMedicalApp } from '../../context/MedicalAppContext';
+import { usePreferences } from '../../context/PreferencesContext';
 import { translations } from '../../utils/translations';
 import { mockDoctors } from '../../data/mockData';
 import { toast } from 'sonner';
 
 export function BookAppointment() {
   const { doctorId } = useParams();
-  const { language } = useMedicalApp();
+  const { language } = usePreferences();
   const t = translations[language];
   const isRTL = language === 'ar';
   const navigate = useNavigate();
@@ -41,24 +40,7 @@ export function BookAppointment() {
   }
 
   return (
-    <div className="min-h-screen bg-background">
-      <nav className="border-b bg-card">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex items-center justify-between h-16">
-            <Link to="/" className="flex items-center gap-2">
-              <div className="w-8 h-8 bg-primary rounded-lg flex items-center justify-center">
-                <span className="text-primary-foreground font-bold">M</span>
-              </div>
-              <span className="font-semibold">
-                {language === 'en' ? 'MediCare' : 'ميديكير'}
-              </span>
-            </Link>
-            <Header />
-          </div>
-        </div>
-      </nav>
-
-      <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+    <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <Link to={`/doctors/${doctorId}`}>
           <Button variant="ghost" className="mb-6 gap-2">
             <ChevronLeft className={`h-4 w-4 ${isRTL ? 'rotate-180' : ''}`} />
@@ -186,6 +168,5 @@ export function BookAppointment() {
           </CardContent>
         </Card>
       </div>
-    </div>
   );
 }

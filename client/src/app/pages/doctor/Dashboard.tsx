@@ -4,13 +4,13 @@ import { Button } from '../../components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '../../components/ui/card';
 import { Avatar, AvatarImage, AvatarFallback } from '../../components/ui/avatar';
 import { StatusBadge } from '../../components/StatusBadge';
-import { Header } from '../../components/Header';
-import { useMedicalApp } from '../../context/MedicalAppContext';
+
+import { usePreferences } from '../../context/PreferencesContext';
 import { translations } from '../../utils/translations';
 import { mockAppointments, mockDoctors } from '../../data/mockData';
 
 export function DoctorDashboard() {
-  const { language } = useMedicalApp();
+  const { language } = usePreferences();
   const t = translations[language];
 
   // Mock data for the logged-in doctor
@@ -47,35 +47,7 @@ export function DoctorDashboard() {
   ];
 
   return (
-    <div className="min-h-screen bg-background">
-      <nav className="border-b bg-card">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex items-center justify-between h-16">
-            <Link to="/doctor/dashboard" className="flex items-center gap-2">
-              <div className="w-8 h-8 bg-primary rounded-lg flex items-center justify-center">
-                <span className="text-primary-foreground font-bold">M</span>
-              </div>
-              <span className="font-semibold">
-                {language === 'en' ? 'MediCare' : 'ميديكير'}
-              </span>
-            </Link>
-            <div className="flex items-center gap-4">
-              <Header />
-              <Link to="/doctor/appointments">
-                <Button variant="ghost">{t.appointments}</Button>
-              </Link>
-              <Link to="/doctor/availability">
-                <Button variant="ghost">{t.availability}</Button>
-              </Link>
-              <Link to="/doctor/profile">
-                <Button variant="outline">{t.profile}</Button>
-              </Link>
-            </div>
-          </div>
-        </div>
-      </nav>
-
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <div className="mb-8">
           <h1 className="text-3xl font-bold mb-2">
             {language === 'en' ? `Welcome, ${currentDoctor.name}` : `مرحباً، ${currentDoctor.nameAr}`}
@@ -178,6 +150,5 @@ export function DoctorDashboard() {
           </div>
         </div>
       </div>
-    </div>
   );
 }

@@ -9,19 +9,19 @@ import { Badge } from '../../components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../../components/ui/select';
 import { NavBar } from '../../components/NavBar';
 import { DoctorListSkeleton } from '../../components/Skeletons';
-import { useMedicalApp } from '../../context/MedicalAppContext';
+import { usePreferences } from '../../context/PreferencesContext';
 import { translations } from '../../utils/translations';
-import { apiService } from '../../apiService';
+import { patientService } from '../../services/patient.service';
 import { useApiCall } from '../../hooks/useApiCall';
 
 export function DoctorList() {
-  const { language } = useMedicalApp();
+  const { language } = usePreferences();
   const t = translations[language];
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedSpecialty, setSelectedSpecialty] = useState('all');
 
-  const { data: doctors, loading: doctorsLoading } = useApiCall(() => apiService.getDoctors(), []);
-  const { data: specialties, loading: specialtiesLoading } = useApiCall(() => apiService.getSpecialties(), []);
+  const { data: doctors, loading: doctorsLoading } = useApiCall(    () => patientService.getDoctors(), []);
+  const { data: specialties, loading: specialtiesLoading } = useApiCall(    () => patientService.getSpecialties(), []);
 
   const filteredDoctors = useMemo(() => {
     if (!doctors) return [];

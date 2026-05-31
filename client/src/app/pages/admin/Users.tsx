@@ -5,12 +5,12 @@ import { Input } from '../../components/ui/input';
 import { Card, CardContent, CardHeader, CardTitle } from '../../components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '../../components/ui/table';
 import { Badge } from '../../components/ui/badge';
-import { Header } from '../../components/Header';
-import { useMedicalApp } from '../../context/MedicalAppContext';
+
+import { usePreferences } from '../../context/PreferencesContext';
 import { translations } from '../../utils/translations';
 import { toast } from 'sonner';
 import { useEffect, useState } from 'react';
-import { adminService } from './adminService';
+import { adminService } from '../../services/admin.service';
 
 interface AdminUser {
   id: number;
@@ -21,7 +21,7 @@ interface AdminUser {
 }
 
 export function AdminUsers() {
-  const { language } = useMedicalApp();
+  const { language } = usePreferences();
   const t = translations[language];
   const [searchTerm, setSearchTerm] = useState('');
   const [users, setUsers] = useState<AdminUser[]>([]);
@@ -63,29 +63,7 @@ export function AdminUsers() {
   };
 
   return (
-    <div className="min-h-screen bg-background">
-      <nav className="border-b bg-card">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex items-center justify-between h-16">
-            <Link to="/admin/dashboard" className="flex items-center gap-2">
-              <div className="w-8 h-8 bg-primary rounded-lg flex items-center justify-center">
-                <span className="text-primary-foreground font-bold">M</span>
-              </div>
-              <span className="font-semibold">
-                {language === 'en' ? 'MediCare Admin' : 'ميديكير - الإدارة'}
-              </span>
-            </Link>
-            <div className="flex items-center gap-4">
-              <Header />
-              <Link to="/admin/dashboard">
-                <Button variant="ghost">{t.dashboard}</Button>
-              </Link>
-            </div>
-          </div>
-        </div>
-      </nav>
-
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <div className="mb-6">
           <h1 className="text-3xl font-bold mb-2">{t.userManagement}</h1>
           <p className="text-muted-foreground">
@@ -169,6 +147,5 @@ export function AdminUsers() {
           </CardContent>
         </Card>
       </div>
-    </div>
   );
 }
