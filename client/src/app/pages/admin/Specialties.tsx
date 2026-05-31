@@ -6,12 +6,12 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '.
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '../../components/ui/dialog';
 import { Input } from '../../components/ui/input';
 import { Label } from '../../components/ui/label';
-import { Header } from '../../components/Header';
-import { useMedicalApp } from '../../context/MedicalAppContext';
+
+import { usePreferences } from '../../context/PreferencesContext';
 import { translations } from '../../utils/translations';
 import { toast } from 'sonner';
 import { useEffect, useState } from 'react';
-import { adminService } from './adminService';
+import { adminService } from '../../services/admin.service';
 
 interface Specialty {
   id: number;
@@ -20,7 +20,7 @@ interface Specialty {
 }
 
 export function AdminSpecialties() {
-  const { language } = useMedicalApp();
+  const { language } = usePreferences();
   const t = translations[language];
   const [specialties, setSpecialties] = useState<Specialty[]>([]);
   const [newSpecialty, setNewSpecialty] = useState({ name: '' });
@@ -66,29 +66,7 @@ export function AdminSpecialties() {
   };
 
   return (
-    <div className="min-h-screen bg-background">
-      <nav className="border-b bg-card">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex items-center justify-between h-16">
-            <Link to="/admin/dashboard" className="flex items-center gap-2">
-              <div className="w-8 h-8 bg-primary rounded-lg flex items-center justify-center">
-                <span className="text-primary-foreground font-bold">M</span>
-              </div>
-              <span className="font-semibold">
-                {language === 'en' ? 'MediCare Admin' : 'ميديكير - الإدارة'}
-              </span>
-            </Link>
-            <div className="flex items-center gap-4">
-              <Header />
-              <Link to="/admin/dashboard">
-                <Button variant="ghost">{t.dashboard}</Button>
-              </Link>
-            </div>
-          </div>
-        </div>
-      </nav>
-
-      <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+    <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <div className="mb-6">
           <h1 className="text-3xl font-bold mb-2">{t.specialtyManagement}</h1>
           <p className="text-muted-foreground">
@@ -161,6 +139,5 @@ export function AdminSpecialties() {
           </CardContent>
         </Card>
       </div>
-    </div>
   );
 }

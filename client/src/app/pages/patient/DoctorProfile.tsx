@@ -5,13 +5,13 @@ import { Card, CardContent } from '../../components/ui/card';
 import { Avatar, AvatarImage, AvatarFallback } from '../../components/ui/avatar';
 import { Badge } from '../../components/ui/badge';
 import { Header } from '../../components/Header';
-import { useMedicalApp } from '../../context/MedicalAppContext';
+import { usePreferences } from '../../context/PreferencesContext';
 import { translations } from '../../utils/translations';
 import { mockDoctors } from '../../data/mockData';
 
 export function DoctorProfile() {
   const { id } = useParams();
-  const { language } = useMedicalApp();
+  const { language } = usePreferences();
   const t = translations[language];
   const isRTL = language === 'ar';
 

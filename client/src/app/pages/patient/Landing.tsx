@@ -1,22 +1,22 @@
 import { Link } from 'react-router';
-import { Calendar, Users, Shield, Star, ChevronRight, Stethoscope, ShieldCheck } from 'lucide-react';
+import { Calendar, Users, Shield, Star, ChevronRight } from 'lucide-react';
 import { Button } from '../../components/ui/button';
 import { Card, CardContent } from '../../components/ui/card';
 import { Avatar, AvatarImage, AvatarFallback } from '../../components/ui/avatar';
 import { NavBar } from '../../components/NavBar';
 import { DoctorCardSkeleton } from '../../components/Skeletons';
-import { useMedicalApp } from '../../context/MedicalAppContext';
+import { usePreferences } from '../../context/PreferencesContext';
 import { translations } from '../../utils/translations';
-import { apiService } from '../../apiService';
+import { patientService } from '../../services/patient.service';
 import { useApiCall } from '../../hooks/useApiCall';
 
 export function PatientLanding() {
-  const { language } = useMedicalApp();
+  const { language } = usePreferences();
   const t = translations[language];
   const isRTL = language === 'ar';
 
   const { data: doctors, loading: doctorsLoading } = useApiCall(
-    () => apiService.getDoctors(),
+    () => patientService.getDoctors(),
     []
   );
   const topDoctors = (doctors || []).slice(0, 3);
@@ -48,7 +48,6 @@ export function PatientLanding() {
   const navLinks = [
     { label: t.home, to: '/' },
     { label: t.doctors, to: '/doctors' },
-    { label: t.appointments, to: '/my-appointments' },
   ];
 
   const navActions = [
@@ -98,58 +97,7 @@ export function PatientLanding() {
         </div>
       </section>
 
-      {/* Role-based CTAs */}
-      <section className="py-12 border-b">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="grid sm:grid-cols-2 gap-6">
-            <Card className="border-primary/30 hover:border-primary transition-colors">
-              <CardContent className="p-6 flex items-center gap-4">
-                <div className="w-14 h-14 bg-primary/10 rounded-xl flex items-center justify-center shrink-0">
-                  <Stethoscope className="h-7 w-7 text-primary" />
-                </div>
-                <div className="flex-1">
-                  <h3 className="font-semibold mb-1">
-                    {language === 'en' ? 'Are you a doctor?' : 'هل أنت طبيب؟'}
-                  </h3>
-                  <p className="text-sm text-muted-foreground mb-3">
-                    {language === 'en'
-                      ? 'Manage your schedule and patient appointments'
-                      : 'أدر جدولك ومواعيد مرضاك'}
-                  </p>
-                  <Link to="/doctor/login">
-                    <Button size="sm" variant="outline">
-                      {language === 'en' ? 'Doctor Login' : 'دخول الأطباء'}
-                    </Button>
-                  </Link>
-                </div>
-              </CardContent>
-            </Card>
 
-            <Card className="border-muted hover:border-primary/30 transition-colors">
-              <CardContent className="p-6 flex items-center gap-4">
-                <div className="w-14 h-14 bg-muted rounded-xl flex items-center justify-center shrink-0">
-                  <ShieldCheck className="h-7 w-7 text-muted-foreground" />
-                </div>
-                <div className="flex-1">
-                  <h3 className="font-semibold mb-1">
-                    {language === 'en' ? 'Platform Admin?' : 'مسؤول المنصة؟'}
-                  </h3>
-                  <p className="text-sm text-muted-foreground mb-3">
-                    {language === 'en'
-                      ? 'Manage users, doctors and appointments'
-                      : 'إدارة المستخدمين والأطباء والمواعيد'}
-                  </p>
-                  <Link to="/admin/login">
-                    <Button size="sm" variant="outline">
-                      {language === 'en' ? 'Admin Login' : 'دخول الإدارة'}
-                    </Button>
-                  </Link>
-                </div>
-              </CardContent>
-            </Card>
-          </div>
-        </div>
-      </section>
 
       {/* Features */}
       <section className="py-20">
@@ -260,16 +208,16 @@ export function PatientLanding() {
           <div className="flex flex-wrap gap-4 justify-center">
             <Link to="/register">
               <Button size="lg" variant="secondary">
-                {language === 'en' ? 'Sign up as Patient' : 'سجّل كمريض'}
+                {t.register}
               </Button>
             </Link>
-            <Link to="/doctor/login">
+            <Link to="/login">
               <Button
                 size="lg"
                 variant="outline"
                 className="border-primary-foreground/40 text-primary-foreground hover:bg-primary-foreground/10"
               >
-                {language === 'en' ? 'Sign in as Doctor' : 'دخول كطبيب'}
+                {language === 'en' ? 'Sign In' : 'تسجيل الدخول'}
               </Button>
             </Link>
           </div>
@@ -279,7 +227,7 @@ export function PatientLanding() {
       {/* Footer */}
       <footer className="bg-card border-t py-12">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="grid sm:grid-cols-2 md:grid-cols-4 gap-8">
+            <div className="grid sm:grid-cols-2 md:grid-cols-4 gap-8">
             <div>
               <div className="flex items-center gap-2 mb-4">
                 <div className="w-8 h-8 bg-primary rounded-lg flex items-center justify-center">
@@ -299,22 +247,6 @@ export function PatientLanding() {
                 </Link>
                 <Link to="/my-appointments" className="block text-sm text-muted-foreground hover:text-primary">
                   {t.appointments}
-                </Link>
-              </div>
-            </div>
-            <div>
-              <h4 className="font-semibold mb-4">{language === 'en' ? 'For Doctors' : 'للأطباء'}</h4>
-              <div className="space-y-2">
-                <Link to="/doctor/login" className="block text-sm text-muted-foreground hover:text-primary">
-                  {language === 'en' ? 'Doctor Login' : 'دخول الأطباء'}
-                </Link>
-              </div>
-            </div>
-            <div>
-              <h4 className="font-semibold mb-4">{language === 'en' ? 'Admin' : 'الإدارة'}</h4>
-              <div className="space-y-2">
-                <Link to="/admin/login" className="block text-sm text-muted-foreground hover:text-primary">
-                  {language === 'en' ? 'Admin Login' : 'دخول المسؤولين'}
                 </Link>
               </div>
             </div>

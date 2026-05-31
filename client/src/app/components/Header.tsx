@@ -1,10 +1,10 @@
 import { Moon, Sun, Globe } from 'lucide-react';
 import { Button } from './ui/button';
-import { useMedicalApp } from '../context/MedicalAppContext';
+import { usePreferences } from '../context/PreferencesContext';
 import { translations } from '../utils/translations';
 
 export function Header() {
-  const { language, setLanguage, theme, setTheme } = useMedicalApp();
+  const { language, setLanguage, theme, setTheme } = usePreferences();
   const t = translations[language];
 
   const toggleTheme = () => {

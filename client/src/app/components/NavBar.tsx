@@ -3,7 +3,7 @@ import { Link } from 'react-router';
 import { Menu, X } from 'lucide-react';
 import { Button } from './ui/button';
 import { Header } from './Header';
-import { useMedicalApp } from '../context/MedicalAppContext';
+import { usePreferences } from '../context/PreferencesContext';
 
 export interface NavLink {
   label: string;
@@ -21,7 +21,7 @@ interface NavBarProps {
 const BRAND_NAME = { en: 'Mawid', ar: 'مواعيد' };
 
 export function NavBar({ brandTo = '/', links = [], actions = [] }: NavBarProps) {
-  const { language } = useMedicalApp();
+  const { language } = usePreferences();
   const [open, setOpen] = useState(false);
 
   const brand = BRAND_NAME[language];

@@ -7,14 +7,14 @@ import { Textarea } from '../../components/ui/textarea';
 import { Label } from '../../components/ui/label';
 import { Card, CardContent, CardHeader, CardTitle } from '../../components/ui/card';
 import { Avatar, AvatarImage, AvatarFallback } from '../../components/ui/avatar';
-import { Header } from '../../components/Header';
-import { useMedicalApp } from '../../context/MedicalAppContext';
+
+import { usePreferences } from '../../context/PreferencesContext';
 import { translations } from '../../utils/translations';
 import { mockDoctors } from '../../data/mockData';
 import { toast } from 'sonner';
 
 export function DoctorProfileEdit() {
-  const { language } = useMedicalApp();
+  const { language } = usePreferences();
   const t = translations[language];
   const currentDoctor = mockDoctors[0];
 
@@ -36,28 +36,6 @@ export function DoctorProfileEdit() {
   };
 
   return (
-    <div className="min-h-screen bg-background">
-      <nav className="border-b bg-card">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex items-center justify-between h-16">
-            <Link to="/doctor/dashboard" className="flex items-center gap-2">
-              <div className="w-8 h-8 bg-primary rounded-lg flex items-center justify-center">
-                <span className="text-primary-foreground font-bold">M</span>
-              </div>
-              <span className="font-semibold">
-                {language === 'en' ? 'MediCare' : 'ميديكير'}
-              </span>
-            </Link>
-            <div className="flex items-center gap-4">
-              <Header />
-              <Link to="/doctor/dashboard">
-                <Button variant="ghost">{t.dashboard}</Button>
-              </Link>
-            </div>
-          </div>
-        </div>
-      </nav>
-
       <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <h1 className="text-3xl font-bold mb-6">
           {language === 'en' ? 'Edit Profile' : 'تعديل الملف الشخصي'}
@@ -137,6 +115,5 @@ export function DoctorProfileEdit() {
           </div>
         </div>
       </div>
-    </div>
   );
 }
