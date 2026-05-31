@@ -29,9 +29,9 @@ export function RegisterForm() {
   const onSubmit = async (data: RegisterFormData) => {
     try {
       await registerUser({
-        name: data.name,
+        first_name: data.first_name,
+        last_name: data.last_name,
         email: data.email,
-        phone: data.phone,
         password: data.password,
         role: selectedRole,
       });
@@ -86,22 +86,27 @@ export function RegisterForm() {
         </div>
 
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
-          <div className="space-y-2">
-            <Label htmlFor="name">{t.name}</Label>
-            <Input id="name" {...register('name')} />
-            {errors.name && <p className="text-sm text-destructive">{errors.name.message}</p>}
+          <div className="grid grid-cols-2 gap-3">
+            <div className="space-y-2">
+              <Label htmlFor="first_name">
+                {language === 'en' ? 'First Name' : 'الاسم الأول'}
+              </Label>
+              <Input id="first_name" {...register('first_name')} />
+              {errors.first_name && <p className="text-sm text-destructive">{errors.first_name.message}</p>}
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="last_name">
+                {language === 'en' ? 'Last Name' : 'اسم العائلة'}
+              </Label>
+              <Input id="last_name" {...register('last_name')} />
+              {errors.last_name && <p className="text-sm text-destructive">{errors.last_name.message}</p>}
+            </div>
           </div>
 
           <div className="space-y-2">
             <Label htmlFor="email">{t.email}</Label>
             <Input id="email" type="email" {...register('email')} />
             {errors.email && <p className="text-sm text-destructive">{errors.email.message}</p>}
-          </div>
-
-          <div className="space-y-2">
-            <Label htmlFor="phone">{t.phone}</Label>
-            <Input id="phone" type="tel" {...register('phone')} />
-            {errors.phone && <p className="text-sm text-destructive">{errors.phone.message}</p>}
           </div>
 
           <div className="space-y-2">

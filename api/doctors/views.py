@@ -33,8 +33,8 @@ class DoctorProfileUpdateView(generics.RetrieveUpdateAPIView):
     permission_classes = [IsDoctorRole]
 
     def get_object(self):
-        # Always returns the logged-in doctor's own profile
-        return self.request.user.doctor_profile
+        profile, _ = Doctor.objects.get_or_create(user=self.request.user)
+        return profile
 
 
 # ─── 4. POST /api/doctors/availability/ — Add slot
@@ -46,10 +46,12 @@ class DoctorAvailabilityViewSet(viewsets.ModelViewSet):
     lookup_value_regex = r'[0-9]+'
 
     def get_queryset(self):
-        return DoctorAvailability.objects.filter(doctor__user=self.request.user).order_by('day', 'start_time')
+        doctor, _ = Doctor.objects.get_or_create(user=self.request.user)
+        return DoctorAvailability.objects.filter(doctor=doctor).order_by('day', 'start_time')
 
     def perform_create(self, serializer):
-        serializer.save(doctor=self.request.user.doctor_profile)
+        doctor, _ = Doctor.objects.get_or_create(user=self.request.user)
+        serializer.save(doctor=doctor)
 
 
 # ─── 6. GET /api/doctors/appointments/ — Doctor sees their appointments
@@ -58,8 +60,9 @@ class DoctorAppointmentListView(generics.ListAPIView):
     permission_classes = [IsDoctorRole]
 
     def get_queryset(self):
+        doctor, _ = Doctor.objects.get_or_create(user=self.request.user)
         return Appointment.objects.filter(
-            doctor=self.request.user.doctor_profile
+            doctor=doctor
         ).select_related('patient__user').order_by('-appointment_date')
 
 
@@ -81,5 +84,5 @@ class AppointmentStatusUpdateView(generics.UpdateAPIView):
     http_method_names = ['patch']
 
     def get_queryset(self):
-        # Doctor can only update their own appointments
-        return Appointment.objects.filter(doctor=self.request.user.doctor_profile)
+        doctor, _ = Doctor.objects.get_or_create(user=self.request.user)
+        return Appointment.objects.filter(doctor=doctor)

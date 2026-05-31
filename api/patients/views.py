@@ -27,7 +27,7 @@ class AppointmentView(generics.ListCreateAPIView):
     permission_classes = [IsAuthenticated, IsPatientRole]
 
     def get_queryset(self):
-        patient_profile = Patient.objects.get(user=self.request.user)
+        patient_profile, _ = Patient.objects.get_or_create(user=self.request.user)
         return Appointment.objects.filter(patient=patient_profile).order_by('appointment_date', 'appointment_time')
 
     def perform_create(self, serializer):
@@ -59,7 +59,7 @@ class AppointmentView(generics.ListCreateAPIView):
             if update_fields:
                 user.save(update_fields=update_fields)
 
-            patient_profile = Patient.objects.get(user=user)
+            patient_profile, _ = Patient.objects.get_or_create(user=user)
             serializer.save(patient=patient_profile)
 
 
@@ -72,7 +72,7 @@ class CancelAppointmentView(APIView):
 
     def patch(self, request, pk):
         try:
-            patient_profile = Patient.objects.get(user=request.user)
+            patient_profile, _ = Patient.objects.get_or_create(user=request.user)
             appointment = Appointment.objects.get(pk=pk, patient=patient_profile)
         except (Patient.DoesNotExist, Appointment.DoesNotExist):
             return Response(
@@ -100,7 +100,7 @@ class RescheduleAppointmentView(generics.UpdateAPIView):
     http_method_names = ['patch']
 
     def get_queryset(self):
-        patient_profile = Patient.objects.get(user=self.request.user)
+        patient_profile, _ = Patient.objects.get_or_create(user=self.request.user)
         return Appointment.objects.filter(patient=patient_profile)
 
     def perform_update(self, serializer):

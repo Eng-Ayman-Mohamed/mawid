@@ -13,9 +13,9 @@ export interface LoginResponse {
 }
 
 export interface RegisterData {
-  name: string;
+  first_name: string;
+  last_name: string;
   email: string;
-  phone: string;
   password: string;
   role: string;
 }
@@ -30,10 +30,10 @@ export const authService = {
   },
 
   refreshToken(refresh: string) {
-    return client.post<{ access: string; refresh?: string }>('/api/auth/refresh/', { refresh }).then((r) => r.data);
+    return client.post<{ access: string; refresh?: string }>('/api/auth/token/refresh/', { refresh }).then((r) => r.data);
   },
 
   getProfile() {
-    return client.get<LoginResponse['user']>('/api/auth/profile/').then((r) => r.data);
+    return client.get<LoginResponse['user']>('/api/auth/me/').then((r) => r.data);
   },
 };
