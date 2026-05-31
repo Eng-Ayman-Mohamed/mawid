@@ -89,6 +89,11 @@ class AdminUserViewSet(viewsets.ModelViewSet):
     @action(detail=True, methods=["patch"])
     def block(self, request, pk=None):
         user = self.get_object()
+        if user.pk == request.user.pk:
+            return Response(
+                {"message": "You cannot block yourself"},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
         user.is_blocked = True
         user.is_active = False
         user.save()
@@ -101,6 +106,12 @@ class AdminUserViewSet(viewsets.ModelViewSet):
         user.is_active = True
         user.save()
         return Response({"message": "User unblocked successfully"})
+
+    def perform_destroy(self, instance):
+        if instance.pk == self.request.user.pk:
+            from rest_framework.exceptions import PermissionDenied
+            raise PermissionDenied("You cannot delete yourself")
+        instance.delete()
 
 
 # SPECIALTY CRUD (admin)

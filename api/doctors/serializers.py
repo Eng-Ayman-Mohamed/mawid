@@ -18,6 +18,30 @@ class DoctorAvailabilitySerializer(serializers.ModelSerializer):
         model = DoctorAvailability
         fields = ['id', 'day', 'start_time', 'end_time']
 
+    def validate(self, data):
+        day = data.get('day')
+        start_time = data.get('start_time')
+        end_time = data.get('end_time')
+
+        if start_time and end_time and start_time >= end_time:
+            raise serializers.ValidationError("Start time must be before end time.")
+
+        doctor = self.context['request'].user.doctor_profile
+        overlapping = DoctorAvailability.objects.filter(
+            doctor=doctor,
+            day=day,
+            start_time__lt=end_time,
+            end_time__gt=start_time,
+        )
+        if self.instance:
+            overlapping = overlapping.exclude(pk=self.instance.pk)
+        if overlapping.exists():
+            raise serializers.ValidationError(
+                "This time slot overlaps with an existing availability entry."
+            )
+
+        return data
+
 
 # ─── Doctor list / detail serializer
 class DoctorSerializer(serializers.ModelSerializer):
@@ -49,6 +73,8 @@ class AppointmentSerializer(serializers.ModelSerializer):
 
 # ─── Status update serializer (used for confirm/reject)
 class AppointmentStatusSerializer(serializers.ModelSerializer):
+    status = serializers.CharField()
+
     class Meta:
         model = Appointment
         fields = ['status', 'notes']

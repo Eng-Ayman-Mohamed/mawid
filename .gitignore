@@ -1,9 +1,10 @@
-##########################   Backend 
+##########################   Backend
 
 # Python
 __pycache__/
 *.py[cod]
 *.pyo
+*.pyc
 
 # Django
 *.sqlite3
@@ -13,35 +14,28 @@ staticfiles/
 
 # Environment
 .env
-
-.venv
-**/migrations/*.py
-!**/migrations/__init__.py
-*.sqlite3
-venv/
-myenv/
-__pycache__/
-*.pyc
-patients/migrations/0001_initial.py
-
 .venv/
 venv/
 env/
+myenv/
+
+# Migrations
+**/migrations/*.py
+!**/migrations/__init__.py
 
 # IDE
 .vscode/
 .idea/
+*.sw?
 
-# Migrations (optional — most teams keep these)
- */migrations/*.py
- !*/migrations/__init__.py
+# OS
+.DS_Store
 
 
-##########################   Frontend 
+##########################   Frontend
 
 # Logs
 logs
-*.log
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
@@ -57,9 +51,7 @@ dist-ssr
 .vscode/*
 !.vscode/extensions.json
 .idea
-.DS_Store
 *.suo
 *.ntvs*
 *.njsproj
 *.sln
-*.sw?

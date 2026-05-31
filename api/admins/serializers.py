@@ -28,7 +28,8 @@ class AdminUserSerializer(serializers.ModelSerializer):
 
     @extend_schema_field(serializers.CharField())
     def get_display_name(self, obj) -> str:
-        return obj.email
+        full_name = obj.get_full_name()
+        return full_name if full_name else obj.email
 
     @extend_schema_field(serializers.ChoiceField(choices=["active", "pending", "blocked", "inactive"]))
     def get_status(self, obj) -> str:

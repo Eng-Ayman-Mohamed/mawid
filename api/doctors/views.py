@@ -15,12 +15,16 @@ from users.permissions import IsAdminRole, IsDoctorRole
 # ─── 1. GET /api/doctors/ — List with filters
 # ─── 2. GET /api/doctors/{id}/ — Detail + availability
 class DoctorViewSet(viewsets.ReadOnlyModelViewSet):
-    queryset = Doctor.objects.select_related('user', 'specialty').prefetch_related('availability')
+    queryset = Doctor.objects.select_related('user', 'specialty').prefetch_related('availability').order_by('id')
     serializer_class = DoctorSerializer
     filter_backends = [DjangoFilterBackend, filters.SearchFilter]
     filterset_fields = ['specialty']
     search_fields = ['user__first_name', 'user__last_name', 'specialty__name']
-    permission_classes = [permissions.IsAuthenticated]
+
+    def get_permissions(self):
+        if self.action in ('list', 'retrieve'):
+            return [permissions.AllowAny()]
+        return [permissions.IsAuthenticated()]
 
 
 # ─── 3. PATCH /api/doctors/profile/ — Doctor updates own profile
@@ -42,7 +46,7 @@ class DoctorAvailabilityViewSet(viewsets.ModelViewSet):
     lookup_value_regex = r'[0-9]+'
 
     def get_queryset(self):
-        return DoctorAvailability.objects.filter(doctor__user=self.request.user)
+        return DoctorAvailability.objects.filter(doctor__user=self.request.user).order_by('day', 'start_time')
 
     def perform_create(self, serializer):
         serializer.save(doctor=self.request.user.doctor_profile)
