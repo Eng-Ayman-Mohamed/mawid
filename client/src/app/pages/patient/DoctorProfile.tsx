@@ -33,9 +33,7 @@ export function DoctorProfile() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex items-center justify-between h-16">
             <Link to="/" className="flex items-center gap-2">
-              <div className="w-8 h-8 bg-primary rounded-lg flex items-center justify-center">
-                <span className="text-primary-foreground font-bold">M</span>
-              </div>
+<img src="/favicon.png" alt="Mawid" className="w-8 h-8 rounded-lg" />
               <span className="font-semibold">
                 {language === 'en' ? 'MediCare' : 'ميديكير'}
               </span>

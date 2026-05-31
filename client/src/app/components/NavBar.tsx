@@ -34,9 +34,7 @@ export function NavBar({ brandTo = '/', links = [], actions = [] }: NavBarProps)
             {/* Logo */}
             <div className="flex items-center gap-8">
               <Link to={brandTo} className="flex items-center gap-2 shrink-0">
-                <div className="w-8 h-8 bg-primary rounded-lg flex items-center justify-center">
-                  <span className="text-primary-foreground font-bold text-sm">م</span>
-                </div>
+                <img src="/favicon.png" alt="Mawid" className="w-8 h-8 rounded-lg" />
                 <span className="font-semibold">{brand}</span>
               </Link>
 
@@ -83,9 +81,7 @@ export function NavBar({ brandTo = '/', links = [], actions = [] }: NavBarProps)
           <div className="absolute right-0 top-0 h-full w-72 bg-card shadow-xl flex flex-col p-6 gap-6">
             <div className="flex items-center justify-between">
               <Link to={brandTo} onClick={() => setOpen(false)} className="flex items-center gap-2">
-                <div className="w-8 h-8 bg-primary rounded-lg flex items-center justify-center">
-                  <span className="text-primary-foreground font-bold text-sm">م</span>
-                </div>
+                <img src="/favicon.png" alt="Mawid" className="w-8 h-8 rounded-lg" />
                 <span className="font-semibold">{brand}</span>
               </Link>
               <Button variant="ghost" size="icon" onClick={() => setOpen(false)}>

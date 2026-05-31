@@ -230,9 +230,7 @@ export function PatientLanding() {
             <div className="grid sm:grid-cols-2 md:grid-cols-4 gap-8">
             <div>
               <div className="flex items-center gap-2 mb-4">
-                <div className="w-8 h-8 bg-primary rounded-lg flex items-center justify-center">
-                  <span className="text-primary-foreground font-bold text-sm">م</span>
-                </div>
+                <img src="/favicon.png" alt="Mawid" className="w-8 h-8 rounded-lg" />
                 <span className="font-semibold">{language === 'en' ? 'Mawid' : 'مواعيد'}</span>
               </div>
               <p className="text-sm text-muted-foreground">
