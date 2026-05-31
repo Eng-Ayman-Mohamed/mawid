@@ -1,82 +1,103 @@
 import { Link, useParams, useNavigate } from 'react-router';
 import { useState } from 'react';
-import { ChevronLeft, Calendar as CalendarIcon } from 'lucide-react';
+import { Calendar as CalendarIcon } from 'lucide-react';
 import { Button } from '../../components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '../../components/ui/card';
 import { Calendar } from '../../components/ui/calendar';
-import { Badge } from '../../components/ui/badge';
+import { Skeleton } from '../../components/ui/skeleton';
 import { Textarea } from '../../components/ui/textarea';
-import { Label } from '../../components/ui/label';
-import { Header } from '../../components/Header';
+import { NavBar } from '../../components/NavBar';
 import { useMedicalApp } from '../../context/MedicalAppContext';
 import { translations } from '../../utils/translations';
-import { mockDoctors } from '../../data/mockData';
+import { apiService } from '../../apiService';
+import { useApiCall } from '../../hooks/useApiCall';
 import { toast } from 'sonner';
 
 export function BookAppointment() {
   const { doctorId } = useParams();
   const { language } = useMedicalApp();
   const t = translations[language];
-  const isRTL = language === 'ar';
   const navigate = useNavigate();
 
-  const doctor = mockDoctors.find((d) => d.id === doctorId);
-  const [selectedDate, setSelectedDate] = useState<Date | undefined>(new Date());
-  const [selectedTime, setSelectedTime] = useState<string>('');
+  const { data: doctor, loading } = useApiCall(() => apiService.getDoctor(doctorId!), [doctorId]);
+
+  const [selectedDate, setSelectedDate] = useState<Date | undefined>(undefined);
+  const [selectedTime, setSelectedTime] = useState('');
   const [notes, setNotes] = useState('');
+  const [submitting, setSubmitting] = useState(false);
 
-  const availableTimes = ['9:00 AM', '10:00 AM', '11:00 AM', '2:00 PM', '3:00 PM', '4:00 PM', '5:00 PM'];
+  const availableTimes = ['09:00', '10:00', '11:00', '14:00', '15:00', '16:00', '17:00'];
 
-  const handleBooking = () => {
+  const handleBooking = async () => {
     if (!selectedDate || !selectedTime) {
       toast.error(language === 'en' ? 'Please select date and time' : 'يرجى اختيار التاريخ والوقت');
       return;
     }
-    toast.success(language === 'en' ? 'Appointment booked successfully!' : 'تم حجز الموعد بنجاح!');
-    setTimeout(() => navigate('/my-appointments'), 1500);
+    setSubmitting(true);
+    try {
+      const dateStr = selectedDate.toISOString().split('T')[0];
+      await apiService.bookAppointment({
+        doctor: doctorId,
+        appointment_date: dateStr,
+        appointment_time: selectedTime,
+        notes,
+      });
+      toast.success(language === 'en' ? 'Appointment booked successfully!' : 'تم حجز الموعد بنجاح!');
+      setTimeout(() => navigate('/my-appointments'), 1000);
+    } catch (err: any) {
+      toast.error(err.message || (language === 'en' ? 'Booking failed' : 'فشل الحجز'));
+    } finally {
+      setSubmitting(false);
+    }
   };
 
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-background">
+        <NavBar />
+        <div className="max-w-4xl mx-auto px-4 py-8 space-y-4">
+          <Skeleton className="h-8 w-48" />
+          <div className="grid md:grid-cols-2 gap-6">
+            <Skeleton className="h-72 w-full" />
+            <div className="space-y-4"><Skeleton className="h-48 w-full" /><Skeleton className="h-32 w-full" /></div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   if (!doctor) {
-    return <div>{language === 'en' ? 'Doctor not found' : 'الطبيب غير موجود'}</div>;
+    return (
+      <div className="min-h-screen bg-background">
+        <NavBar />
+        <div className="flex items-center justify-center py-20">
+          <p className="text-muted-foreground">{language === 'en' ? 'Doctor not found' : 'الطبيب غير موجود'}</p>
+        </div>
+      </div>
+    );
   }
 
   return (
     <div className="min-h-screen bg-background">
-      <nav className="border-b bg-card">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex items-center justify-between h-16">
-            <Link to="/" className="flex items-center gap-2">
-              <div className="w-8 h-8 bg-primary rounded-lg flex items-center justify-center">
-                <span className="text-primary-foreground font-bold">M</span>
-              </div>
-              <span className="font-semibold">
-                {language === 'en' ? 'MediCare' : 'ميديكير'}
-              </span>
-            </Link>
-            <Header />
-          </div>
-        </div>
-      </nav>
+      <NavBar links={[{ label: t.myAppointments, to: '/my-appointments' }]} />
 
       <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <Link to={`/doctors/${doctorId}`}>
-          <Button variant="ghost" className="mb-6 gap-2">
-            <ChevronLeft className={`h-4 w-4 ${isRTL ? 'rotate-180' : ''}`} />
-            {t.back}
-          </Button>
+          <Button variant="ghost" className="mb-6">&larr; {t.back}</Button>
         </Link>
 
         <div className="mb-6">
           <h1 className="text-3xl font-bold mb-2">{t.bookAppointment}</h1>
           <p className="text-muted-foreground">
-            {language === 'en' ? `with ${doctor.name}` : `مع ${doctor.nameAr}`}
+            {language === 'en' ? `with ${doctor.name}` : `مع ${doctor.name}`}
           </p>
         </div>
 
         <div className="grid md:grid-cols-2 gap-6">
           <Card>
             <CardHeader>
-              <CardTitle>
+              <CardTitle className="flex items-center gap-2">
+                <CalendarIcon className="h-5 w-5" />
                 {language === 'en' ? 'Select Date' : 'اختر التاريخ'}
               </CardTitle>
             </CardHeader>
@@ -85,7 +106,7 @@ export function BookAppointment() {
                 mode="single"
                 selected={selectedDate}
                 onSelect={setSelectedDate}
-                disabled={(date) => date < new Date()}
+                disabled={(date) => date < new Date(new Date().setHours(0, 0, 0, 0))}
                 className="rounded-md border"
               />
             </CardContent>
@@ -94,9 +115,7 @@ export function BookAppointment() {
           <div className="space-y-6">
             <Card>
               <CardHeader>
-                <CardTitle>
-                  {language === 'en' ? 'Select Time' : 'اختر الوقت'}
-                </CardTitle>
+                <CardTitle>{language === 'en' ? 'Select Time' : 'اختر الوقت'}</CardTitle>
               </CardHeader>
               <CardContent>
                 <div className="grid grid-cols-2 gap-2">
@@ -116,15 +135,11 @@ export function BookAppointment() {
 
             <Card>
               <CardHeader>
-                <CardTitle>
-                  {language === 'en' ? 'Additional Notes (Optional)' : 'ملاحظات إضافية (اختياري)'}
-                </CardTitle>
+                <CardTitle>{language === 'en' ? 'Notes (Optional)' : 'ملاحظات (اختياري)'}</CardTitle>
               </CardHeader>
               <CardContent>
                 <Textarea
-                  placeholder={language === 'en' 
-                    ? 'Describe your symptoms or reason for visit...'
-                    : 'صف أعراضك أو سبب الزيارة...'}
+                  placeholder={language === 'en' ? 'Describe your symptoms or reason for visit...' : 'صف أعراضك أو سبب الزيارة...'}
                   value={notes}
                   onChange={(e) => setNotes(e.target.value)}
                   rows={4}
@@ -136,52 +151,32 @@ export function BookAppointment() {
 
         <Card className="mt-6">
           <CardContent className="p-6">
-            <h3 className="font-semibold mb-4">
-              {language === 'en' ? 'Booking Summary' : 'ملخص الحجز'}
-            </h3>
-            <div className="space-y-3 text-sm">
+            <h3 className="font-semibold mb-4">{language === 'en' ? 'Booking Summary' : 'ملخص الحجز'}</h3>
+            <div className="space-y-3 text-sm mb-6">
               <div className="flex justify-between">
-                <span className="text-muted-foreground">
-                  {language === 'en' ? 'Doctor' : 'الطبيب'}
-                </span>
-                <span className="font-medium">
-                  {language === 'en' ? doctor.name : doctor.nameAr}
-                </span>
+                <span className="text-muted-foreground">{language === 'en' ? 'Doctor' : 'الطبيب'}</span>
+                <span className="font-medium">{doctor.name}</span>
               </div>
               <div className="flex justify-between">
-                <span className="text-muted-foreground">
-                  {language === 'en' ? 'Specialty' : 'التخصص'}
-                </span>
-                <span>{language === 'en' ? doctor.specialty : doctor.specialtyAr}</span>
+                <span className="text-muted-foreground">{language === 'en' ? 'Specialty' : 'التخصص'}</span>
+                <span>{doctor.specialty}</span>
               </div>
               <div className="flex justify-between">
-                <span className="text-muted-foreground">
-                  {language === 'en' ? 'Date' : 'التاريخ'}
-                </span>
+                <span className="text-muted-foreground">{language === 'en' ? 'Date' : 'التاريخ'}</span>
                 <span>
                   {selectedDate
-                    ? selectedDate.toLocaleDateString(language === 'en' ? 'en-US' : 'ar-EG', {
-                        weekday: 'long',
-                        month: 'long',
-                        day: 'numeric',
-                      })
+                    ? selectedDate.toLocaleDateString(language === 'en' ? 'en-US' : 'ar-EG', { weekday: 'long', month: 'long', day: 'numeric' })
                     : '-'}
                 </span>
               </div>
               <div className="flex justify-between">
-                <span className="text-muted-foreground">
-                  {language === 'en' ? 'Time' : 'الوقت'}
-                </span>
+                <span className="text-muted-foreground">{language === 'en' ? 'Time' : 'الوقت'}</span>
                 <span>{selectedTime || '-'}</span>
               </div>
             </div>
-            <Button 
-              className="w-full mt-6" 
-              size="lg"
-              onClick={handleBooking}
-              disabled={!selectedDate || !selectedTime}
-            >
-              {language === 'en' ? 'Confirm Booking' : 'تأكيد الحجز'}
+            <Button className="w-full" size="lg" onClick={handleBooking}
+              disabled={!selectedDate || !selectedTime || submitting}>
+              {submitting ? t.loading : (language === 'en' ? 'Confirm Booking' : 'تأكيد الحجز')}
             </Button>
           </CardContent>
         </Card>

@@ -1,97 +1,74 @@
 import { Link } from 'react-router';
-import { Calendar, Users, Clock, TrendingUp } from 'lucide-react';
+import { Calendar, Users, Clock, TrendingUp, LogOut } from 'lucide-react';
 import { Button } from '../../components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '../../components/ui/card';
-import { Avatar, AvatarImage, AvatarFallback } from '../../components/ui/avatar';
+import { Avatar, AvatarFallback } from '../../components/ui/avatar';
+import { Skeleton } from '../../components/ui/skeleton';
 import { StatusBadge } from '../../components/StatusBadge';
-import { Header } from '../../components/Header';
+import { NavBar } from '../../components/NavBar';
 import { useMedicalApp } from '../../context/MedicalAppContext';
+import { useAuth } from '../../context/AuthContext';
 import { translations } from '../../utils/translations';
-import { mockAppointments, mockDoctors } from '../../data/mockData';
+import { apiService } from '../../apiService';
+import { useApiCall } from '../../hooks/useApiCall';
 
 export function DoctorDashboard() {
   const { language } = useMedicalApp();
+  const { user, logout } = useAuth();
   const t = translations[language];
 
-  // Mock data for the logged-in doctor
-  const currentDoctor = mockDoctors[0];
-  const todayAppointments = mockAppointments.filter(
-    (apt) => apt.doctorId === currentDoctor.id && apt.date === '2026-05-30'
-  );
+  const { data: profile, loading: profileLoading } = useApiCall(() => apiService.getDoctorProfile(), []);
+  const { data: appointments, loading: aptsLoading } = useApiCall(() => apiService.getDoctorAppointments(), []);
 
-  const stats = [
-    {
-      title: language === 'en' ? "Today's Appointments" : 'مواعيد اليوم',
-      value: '8',
-      icon: Calendar,
-      color: 'text-primary',
-    },
-    {
-      title: language === 'en' ? 'Total Patients' : 'إجمالي المرضى',
-      value: currentDoctor.patients.toString(),
-      icon: Users,
-      color: 'text-accent',
-    },
-    {
-      title: language === 'en' ? 'Pending Requests' : 'الطلبات المعلقة',
-      value: '3',
-      icon: Clock,
-      color: 'text-yellow-600',
-    },
-    {
-      title: language === 'en' ? 'Rating' : 'التقييم',
-      value: currentDoctor.rating.toString(),
-      icon: TrendingUp,
-      color: 'text-green-600',
-    },
+  const today = new Date().toISOString().split('T')[0];
+  const todayAppointments = (appointments || []).filter((a: any) => a.date === today);
+  const pendingCount = (appointments || []).filter((a: any) => a.status === 'pending').length;
+
+  const navLinks = [
+    { label: t.appointments, to: '/doctor/appointments' },
+    { label: t.availability, to: '/doctor/availability' },
   ];
+  const navActions = [{ label: t.profile, to: '/doctor/profile', variant: 'outline' as const }];
+
+  const loading = profileLoading || aptsLoading;
 
   return (
     <div className="min-h-screen bg-background">
-      <nav className="border-b bg-card">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex items-center justify-between h-16">
-            <Link to="/doctor/dashboard" className="flex items-center gap-2">
-              <div className="w-8 h-8 bg-primary rounded-lg flex items-center justify-center">
-                <span className="text-primary-foreground font-bold">M</span>
-              </div>
-              <span className="font-semibold">
-                {language === 'en' ? 'MediCare' : 'ميديكير'}
-              </span>
-            </Link>
-            <div className="flex items-center gap-4">
-              <Header />
-              <Link to="/doctor/appointments">
-                <Button variant="ghost">{t.appointments}</Button>
-              </Link>
-              <Link to="/doctor/availability">
-                <Button variant="ghost">{t.availability}</Button>
-              </Link>
-              <Link to="/doctor/profile">
-                <Button variant="outline">{t.profile}</Button>
-              </Link>
-            </div>
-          </div>
-        </div>
-      </nav>
+      <NavBar brandTo="/doctor/dashboard" links={navLinks} actions={navActions} />
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <div className="mb-8">
-          <h1 className="text-3xl font-bold mb-2">
-            {language === 'en' ? `Welcome, ${currentDoctor.name}` : `مرحباً، ${currentDoctor.nameAr}`}
-          </h1>
-          <p className="text-muted-foreground">
-            {new Date().toLocaleDateString(language === 'en' ? 'en-US' : 'ar-EG', {
-              weekday: 'long',
-              month: 'long',
-              day: 'numeric',
-              year: 'numeric',
-            })}
-          </p>
+        <div className="flex items-center justify-between mb-8">
+          <div>
+            {loading ? (
+              <><Skeleton className="h-8 w-64 mb-2" /><Skeleton className="h-4 w-40" /></>
+            ) : (
+              <>
+                <h1 className="text-3xl font-bold mb-2">
+                  {language === 'en'
+                    ? `Welcome, ${profile?.name || user?.first_name || ''}`
+                    : `مرحباً، ${profile?.name || user?.first_name || ''}`}
+                </h1>
+                <p className="text-muted-foreground">
+                  {new Date().toLocaleDateString(language === 'en' ? 'en-US' : 'ar-EG', {
+                    weekday: 'long', month: 'long', day: 'numeric', year: 'numeric',
+                  })}
+                </p>
+              </>
+            )}
+          </div>
+          <Button variant="outline" size="sm" onClick={logout} className="gap-2">
+            <LogOut className="h-4 w-4" />
+            {language === 'en' ? 'Logout' : 'تسجيل الخروج'}
+          </Button>
         </div>
 
         <div className="grid md:grid-cols-4 gap-6 mb-8">
-          {stats.map((stat) => (
+          {[
+            { title: language === 'en' ? "Today's Appointments" : 'مواعيد اليوم', value: loading ? '—' : String(todayAppointments.length), icon: Calendar, color: 'text-primary' },
+            { title: language === 'en' ? 'Total Appointments' : 'إجمالي المواعيد', value: loading ? '—' : String((appointments || []).length), icon: Users, color: 'text-accent' },
+            { title: language === 'en' ? 'Pending' : 'قيد الانتظار', value: loading ? '—' : String(pendingCount), icon: Clock, color: 'text-yellow-600' },
+            { title: language === 'en' ? 'Experience' : 'الخبرة', value: loading ? '—' : `${profile?.experience || 0}y`, icon: TrendingUp, color: 'text-green-600' },
+          ].map((stat) => (
             <Card key={stat.title}>
               <CardContent className="p-6">
                 <div className="flex items-center justify-between">
@@ -113,33 +90,27 @@ export function DoctorDashboard() {
                 <CardTitle>{t.todaySchedule}</CardTitle>
               </CardHeader>
               <CardContent className="space-y-4">
-                {todayAppointments.length === 0 ? (
+                {loading ? (
+                  [1, 2, 3].map((i) => <Skeleton key={i} className="h-16 w-full" />)
+                ) : todayAppointments.length === 0 ? (
                   <p className="text-muted-foreground text-center py-8">
                     {language === 'en' ? 'No appointments today' : 'لا توجد مواعيد اليوم'}
                   </p>
                 ) : (
-                  todayAppointments.map((appointment) => (
-                    <div
-                      key={appointment.id}
-                      className="flex items-center justify-between p-4 border rounded-lg"
-                    >
+                  todayAppointments.map((apt: any) => (
+                    <div key={apt.id} className="flex items-center justify-between p-4 border rounded-lg">
                       <div className="flex items-center gap-4">
                         <Avatar>
-                          <AvatarFallback>
-                            {appointment.patientName.charAt(0)}
-                          </AvatarFallback>
+                          <AvatarFallback>{apt.patientName?.charAt(0) || 'P'}</AvatarFallback>
                         </Avatar>
                         <div>
-                          <p className="font-semibold">
-                            {language === 'en' ? appointment.patientName : appointment.patientNameAr}
-                          </p>
-                          <p className="text-sm text-muted-foreground">
-                            <Clock className="inline h-3 w-3 mr-1" />
-                            {appointment.time}
+                          <p className="font-semibold">{apt.patientName}</p>
+                          <p className="text-sm text-muted-foreground flex items-center gap-1">
+                            <Clock className="h-3 w-3" />{apt.time}
                           </p>
                         </div>
                       </div>
-                      <StatusBadge status={appointment.status} />
+                      <StatusBadge status={apt.status} />
                     </div>
                   ))
                 )}
@@ -150,26 +121,24 @@ export function DoctorDashboard() {
           <div>
             <Card>
               <CardHeader>
-                <CardTitle>
-                  {language === 'en' ? 'Quick Actions' : 'إجراءات سريعة'}
-                </CardTitle>
+                <CardTitle>{language === 'en' ? 'Quick Actions' : 'إجراءات سريعة'}</CardTitle>
               </CardHeader>
               <CardContent className="space-y-2">
                 <Link to="/doctor/appointments">
-                  <Button variant="outline" className="w-full justify-start">
-                    <Calendar className="h-4 w-4 mr-2" />
+                  <Button variant="outline" className="w-full justify-start gap-2">
+                    <Calendar className="h-4 w-4" />
                     {language === 'en' ? 'View All Appointments' : 'عرض جميع المواعيد'}
                   </Button>
                 </Link>
                 <Link to="/doctor/availability">
-                  <Button variant="outline" className="w-full justify-start">
-                    <Clock className="h-4 w-4 mr-2" />
+                  <Button variant="outline" className="w-full justify-start gap-2">
+                    <Clock className="h-4 w-4" />
                     {t.manageAvailability}
                   </Button>
                 </Link>
                 <Link to="/doctor/profile">
-                  <Button variant="outline" className="w-full justify-start">
-                    <Users className="h-4 w-4 mr-2" />
+                  <Button variant="outline" className="w-full justify-start gap-2">
+                    <Users className="h-4 w-4" />
                     {language === 'en' ? 'Edit Profile' : 'تعديل الملف'}
                   </Button>
                 </Link>

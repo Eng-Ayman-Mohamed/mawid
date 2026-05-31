@@ -1,161 +1,147 @@
-import { Link } from 'react-router';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { User, Mail, Phone, Save } from 'lucide-react';
 import { Button } from '../../components/ui/button';
 import { Input } from '../../components/ui/input';
 import { Label } from '../../components/ui/label';
 import { Card, CardContent, CardHeader, CardTitle } from '../../components/ui/card';
 import { Avatar, AvatarFallback } from '../../components/ui/avatar';
-import { Header } from '../../components/Header';
+import { Skeleton } from '../../components/ui/skeleton';
+import { NavBar } from '../../components/NavBar';
 import { useMedicalApp } from '../../context/MedicalAppContext';
+import { useAuth } from '../../context/AuthContext';
 import { translations } from '../../utils/translations';
+import { apiService } from '../../apiService';
 import { toast } from 'sonner';
 
 export function PatientProfile() {
   const { language } = useMedicalApp();
+  const { user, logout } = useAuth();
   const t = translations[language];
 
-  const [formData, setFormData] = useState({
-    name: 'John Smith',
-    email: 'john.smith@email.com',
-    phone: '+1 234 567 8900',
-    dateOfBirth: '1990-05-15',
-    address: '123 Main Street, New York, NY 10001',
-  });
+  const [profile, setProfile] = useState<any>(null);
+  const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
+  const [formData, setFormData] = useState({ phone: '', date_of_birth: '', address: '' });
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  useEffect(() => {
+    apiService.getPatientProfile()
+      .then((data: any) => {
+        setProfile(data);
+        setFormData({
+          phone: data.phone || '',
+          date_of_birth: data.date_of_birth || '',
+          address: data.address || '',
+        });
+      })
+      .catch(() => {})
+      .finally(() => setLoading(false));
+  }, []);
+
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) =>
     setFormData({ ...formData, [e.target.id]: e.target.value });
+
+  const handleSave = async () => {
+    setSaving(true);
+    try {
+      await apiService.updatePatientProfile(formData);
+      toast.success(language === 'en' ? 'Profile updated successfully!' : 'تم تحديث الملف الشخصي بنجاح!');
+    } catch (err: any) {
+      toast.error(err.message || (language === 'en' ? 'Update failed' : 'فشل التحديث'));
+    } finally {
+      setSaving(false);
+    }
   };
 
-  const handleSave = () => {
-    toast.success(language === 'en' ? 'Profile updated successfully!' : 'تم تحديث الملف الشخصي بنجاح!');
+  const handleLogout = async () => {
+    await logout();
   };
+
+  const displayName = user ? `${user.first_name} ${user.last_name}`.trim() || user.email : '';
+  const initials = displayName.split(' ').map((n: string) => n[0]).join('').toUpperCase().slice(0, 2);
+
+  const navLinks = [{ label: t.myAppointments, to: '/my-appointments' }, { label: t.findDoctor, to: '/doctors' }];
 
   return (
     <div className="min-h-screen bg-background">
-      <nav className="border-b bg-card">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex items-center justify-between h-16">
-            <Link to="/" className="flex items-center gap-2">
-              <div className="w-8 h-8 bg-primary rounded-lg flex items-center justify-center">
-                <span className="text-primary-foreground font-bold">M</span>
-              </div>
-              <span className="font-semibold">
-                {language === 'en' ? 'MediCare' : 'ميديكير'}
-              </span>
-            </Link>
-            <div className="flex items-center gap-4">
-              <Header />
-              <Link to="/my-appointments">
-                <Button variant="ghost">{t.myAppointments}</Button>
-              </Link>
-              <Link to="/doctors">
-                <Button variant="outline">{t.findDoctor}</Button>
-              </Link>
-            </div>
-          </div>
-        </div>
-      </nav>
+      <NavBar links={navLinks} />
 
       <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <h1 className="text-3xl font-bold mb-6">{t.profile}</h1>
+        <div className="flex items-center justify-between mb-6">
+          <h1 className="text-3xl font-bold">{t.profile}</h1>
+          <Button variant="outline" onClick={handleLogout}>
+            {language === 'en' ? 'Logout' : 'تسجيل الخروج'}
+          </Button>
+        </div>
 
-        <div className="grid md:grid-cols-3 gap-6">
-          <Card>
-            <CardContent className="p-6 flex flex-col items-center text-center">
-              <Avatar className="h-24 w-24 mb-4">
-                <AvatarFallback className="text-2xl">JS</AvatarFallback>
-              </Avatar>
-              <h3 className="font-semibold text-lg">{formData.name}</h3>
-              <p className="text-sm text-muted-foreground mb-4">
-                {language === 'en' ? 'Patient' : 'مريض'}
-              </p>
-              <Button variant="outline" size="sm" className="w-full">
-                {language === 'en' ? 'Change Photo' : 'تغيير الصورة'}
-              </Button>
-            </CardContent>
-          </Card>
-
-          <div className="md:col-span-2">
+        {loading ? (
+          <div className="grid md:grid-cols-3 gap-6">
+            <Skeleton className="h-48 w-full" />
+            <div className="md:col-span-2 space-y-3">
+              <Skeleton className="h-10 w-full" />
+              <Skeleton className="h-10 w-full" />
+              <Skeleton className="h-10 w-full" />
+            </div>
+          </div>
+        ) : (
+          <div className="grid md:grid-cols-3 gap-6">
             <Card>
-              <CardHeader>
-                <CardTitle>
-                  {language === 'en' ? 'Personal Information' : 'المعلومات الشخصية'}
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div className="grid md:grid-cols-2 gap-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="name">
-                      <div className="flex items-center gap-2">
-                        <User className="h-4 w-4" />
-                        {t.name}
-                      </div>
-                    </Label>
-                    <Input
-                      id="name"
-                      value={formData.name}
-                      onChange={handleChange}
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="dateOfBirth">
-                      {language === 'en' ? 'Date of Birth' : 'تاريخ الميلاد'}
-                    </Label>
-                    <Input
-                      id="dateOfBirth"
-                      type="date"
-                      value={formData.dateOfBirth}
-                      onChange={handleChange}
-                    />
-                  </div>
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="email">
-                    <div className="flex items-center gap-2">
-                      <Mail className="h-4 w-4" />
-                      {t.email}
-                    </div>
-                  </Label>
-                  <Input
-                    id="email"
-                    type="email"
-                    value={formData.email}
-                    onChange={handleChange}
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="phone">
-                    <div className="flex items-center gap-2">
-                      <Phone className="h-4 w-4" />
-                      {t.phone}
-                    </div>
-                  </Label>
-                  <Input
-                    id="phone"
-                    type="tel"
-                    value={formData.phone}
-                    onChange={handleChange}
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="address">
-                    {language === 'en' ? 'Address' : 'العنوان'}
-                  </Label>
-                  <Input
-                    id="address"
-                    value={formData.address}
-                    onChange={handleChange}
-                  />
-                </div>
-                <Button onClick={handleSave} className="w-full gap-2">
-                  <Save className="h-4 w-4" />
-                  {t.save}
-                </Button>
+              <CardContent className="p-6 flex flex-col items-center text-center">
+                <Avatar className="h-24 w-24 mb-4">
+                  <AvatarFallback className="text-2xl">{initials}</AvatarFallback>
+                </Avatar>
+                <h3 className="font-semibold text-lg">{displayName}</h3>
+                <p className="text-sm text-muted-foreground">{user?.email}</p>
+                <p className="text-sm text-muted-foreground mt-1">{language === 'en' ? 'Patient' : 'مريض'}</p>
               </CardContent>
             </Card>
+
+            <div className="md:col-span-2">
+              <Card>
+                <CardHeader>
+                  <CardTitle>{language === 'en' ? 'Personal Information' : 'المعلومات الشخصية'}</CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <div className="grid md:grid-cols-2 gap-4">
+                    <div className="space-y-2">
+                      <Label>
+                        <div className="flex items-center gap-2"><User className="h-4 w-4" />{language === 'en' ? 'First Name' : 'الاسم الأول'}</div>
+                      </Label>
+                      <Input value={user?.first_name || ''} readOnly className="bg-muted" />
+                    </div>
+                    <div className="space-y-2">
+                      <Label>{language === 'en' ? 'Last Name' : 'اسم العائلة'}</Label>
+                      <Input value={user?.last_name || ''} readOnly className="bg-muted" />
+                    </div>
+                  </div>
+                  <div className="space-y-2">
+                    <Label>
+                      <div className="flex items-center gap-2"><Mail className="h-4 w-4" />{t.email}</div>
+                    </Label>
+                    <Input value={user?.email || ''} readOnly className="bg-muted" />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="phone">
+                      <div className="flex items-center gap-2"><Phone className="h-4 w-4" />{t.phone}</div>
+                    </Label>
+                    <Input id="phone" type="tel" value={formData.phone} onChange={handleChange} />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="date_of_birth">{language === 'en' ? 'Date of Birth' : 'تاريخ الميلاد'}</Label>
+                    <Input id="date_of_birth" type="date" value={formData.date_of_birth} onChange={handleChange} />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="address">{language === 'en' ? 'Address' : 'العنوان'}</Label>
+                    <Input id="address" value={formData.address} onChange={handleChange} />
+                  </div>
+                  <Button onClick={handleSave} className="w-full gap-2" disabled={saving}>
+                    <Save className="h-4 w-4" />
+                    {saving ? t.loading : t.save}
+                  </Button>
+                </CardContent>
+              </Card>
+            </div>
           </div>
-        </div>
+        )}
       </div>
     </div>
   );
