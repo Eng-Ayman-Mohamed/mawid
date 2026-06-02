@@ -45,4 +45,13 @@ export const patientService = {
       getResults(appointmentsRes.data).map((a: any) => normalizeAppointment(a, doctors)),
     );
   },
+
+  cancelAppointment(id: number) {
+    return client.patch(`/api/appointments/${id}/cancel/`).then((r) => r.data);
+  },
+
+  rescheduleAppointment(id: number, data: { appointment_date: string; appointment_time: string }) {
+    return client.patch(`/api/appointments/${id}/reschedule/`, data).then((r) => r.data);
+  }
+
 };

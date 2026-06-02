@@ -1,4 +1,4 @@
-import { Link } from 'react-router';
+import { Link } from 'react-router'; 
 import { useState, useMemo } from 'react';
 import { Search, Star } from 'lucide-react';
 import { Button } from '../../components/ui/button';
@@ -11,7 +11,7 @@ import { NavBar } from '../../components/NavBar';
 import { DoctorListSkeleton } from '../../components/Skeletons';
 import { usePreferences } from '../../context/PreferencesContext';
 import { translations } from '../../utils/translations';
-import { patientService } from '../../services/patient.service';
+import { patientService } from '../../services/patient.service'; 
 import { useApiCall } from '../../hooks/useApiCall';
 
 export function DoctorList() {
@@ -20,14 +20,14 @@ export function DoctorList() {
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedSpecialty, setSelectedSpecialty] = useState('all');
 
-  const { data: doctors, loading: doctorsLoading } = useApiCall(    () => patientService.getDoctors(), []);
-  const { data: specialties, loading: specialtiesLoading } = useApiCall(    () => patientService.getSpecialties(), []);
+  const { data: doctors, loading: doctorsLoading } = useApiCall(() => patientService.getDoctors(), []);
+  const { data: specialties, loading: specialtiesLoading } = useApiCall(() => patientService.getSpecialties(), []);
 
   const filteredDoctors = useMemo(() => {
     if (!doctors) return [];
     return doctors.filter((doctor) => {
       const name = language === 'en' ? doctor.name : doctor.nameAr;
-      const matchesSearch = name.toLowerCase().includes(searchTerm.toLowerCase());
+      const matchesSearch = name?.toLowerCase().includes(searchTerm.toLowerCase()) || false;
       const matchesSpecialty = selectedSpecialty === 'all' || doctor.specialty === selectedSpecialty;
       return matchesSearch && matchesSpecialty;
     });
@@ -42,7 +42,7 @@ export function DoctorList() {
   ];
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen bg-background" dir={language === 'ar' ? 'rtl' : 'ltr'}>
       <NavBar links={navLinks} actions={navActions} />
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
@@ -57,12 +57,12 @@ export function DoctorList() {
 
         <div className="flex flex-col sm:flex-row gap-4 mb-8">
           <div className="flex-1 relative">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+            <Search className={`absolute ${language === 'ar' ? 'right-3' : 'left-3'} top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground`} />
             <Input
               placeholder={language === 'en' ? 'Search doctors by name...' : 'ابحث عن الأطباء بالاسم...'}
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              className="pl-10"
+              className={language === 'ar' ? 'pr-10' : 'pl-10'}
             />
           </div>
           <Select value={selectedSpecialty} onValueChange={setSelectedSpecialty}>
@@ -94,7 +94,7 @@ export function DoctorList() {
                     <div className="flex flex-col items-center text-center">
                       <Avatar className="h-24 w-24 mb-4">
                         <AvatarImage src={doctor.image} alt={language === 'en' ? doctor.name : doctor.nameAr} />
-                        <AvatarFallback>{doctor.name.charAt(0)}</AvatarFallback>
+                        <AvatarFallback>{doctor.name ? doctor.name.charAt(0) : 'D'}</AvatarFallback>
                       </Avatar>
                       <h3 className="font-semibold mb-1">
                         {language === 'en' ? doctor.name : doctor.nameAr}
