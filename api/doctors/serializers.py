@@ -61,10 +61,11 @@ class DoctorSerializer(serializers.ModelSerializer):
 class DoctorProfileUpdateSerializer(serializers.ModelSerializer):
     specialty_id = serializers.IntegerField(required=False, allow_null=True)
     specialty_name = serializers.CharField(source='specialty.name', read_only=True)
+    is_approved = serializers.BooleanField(source='user.is_approved', read_only=True)
 
     class Meta:
         model  = Doctor
-        fields = ['bio', 'contact', 'years_of_experience', 'profile_picture', 'specialty_id', 'specialty_name']
+        fields = ['bio', 'contact', 'years_of_experience', 'profile_picture', 'specialty_id', 'specialty_name', 'is_approved']
 
 
 # ─── Appointment serializer used in doctor views

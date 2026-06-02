@@ -97,24 +97,6 @@ export function RegisterForm() {
           </button>
         </div>
 
-        {selectedRole === 'doctor' && (
-          <div className="space-y-2">
-            <Label>{language === 'en' ? 'Specialty' : 'التخصص'}</Label>
-            <Select value={selectedSpecialty} onValueChange={setSelectedSpecialty}>
-              <SelectTrigger>
-                <SelectValue placeholder={language === 'en' ? 'Select a specialty' : 'اختر التخصص'} />
-              </SelectTrigger>
-              <SelectContent>
-                {specialties.map((s) => (
-                  <SelectItem key={s.id} value={String(s.id)}>
-                    {s.name}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-        )}
-
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
           <div className="grid grid-cols-2 gap-3">
             <div className="space-y-2">
@@ -132,6 +114,24 @@ export function RegisterForm() {
               {errors.last_name && <p className="text-sm text-destructive">{errors.last_name.message}</p>}
             </div>
           </div>
+
+          {selectedRole === 'doctor' && (
+            <div className="space-y-2">
+              <Label>{language === 'en' ? 'Specialty' : 'التخصص'}</Label>
+              <Select value={selectedSpecialty} onValueChange={setSelectedSpecialty}>
+                <SelectTrigger>
+                  <SelectValue placeholder={language === 'en' ? 'Select a specialty' : 'اختر التخصص'} />
+                </SelectTrigger>
+                <SelectContent>
+                  {specialties.map((s) => (
+                    <SelectItem key={s.id} value={String(s.id)}>
+                      {s.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+          )}
 
           <div className="space-y-2">
             <Label htmlFor="email">{t.email}</Label>

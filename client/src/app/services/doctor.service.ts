@@ -99,7 +99,7 @@ export const doctorService = {
           first_name: data.user?.first_name || '',
           last_name: data.user?.last_name || '',
           role: data.user?.role || 'doctor',
-          is_approved: data.user?.is_approved ?? false,
+          is_approved: data.is_approved ?? false,
           is_blocked: data.user?.is_blocked ?? false,
         },
         availability: data.availability || [],
