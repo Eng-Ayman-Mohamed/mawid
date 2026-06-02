@@ -21,21 +21,10 @@ class AppointmentBookingSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Appointment
-        fields = ['id', 'doctor', 'appointment_date', 'appointment_time', 'status', 'created_at', 'first_name', 'last_name']
+        fields = ['id', 'doctor', 'appointment_date', 'appointment_time', 'status', 'created_at', 'notes', 'first_name', 'last_name']
         read_only_fields = ['id', 'status', 'created_at']
 
     def validate(self, data):
-        user = self.context['request'].user
-        first_name = data.get('first_name', '').strip() or user.first_name
-        last_name  = data.get('last_name', '').strip()  or user.last_name
-        errors = {}
-        if not first_name:
-            errors['first_name'] = 'First name is required to complete your booking.'
-        if not last_name:
-            errors['last_name'] = 'Last name is required to complete your booking.'
-        if errors:
-            raise serializers.ValidationError(errors)
-
         doctor           = data['doctor']
         appointment_date = data['appointment_date']
         appointment_time = data['appointment_time']

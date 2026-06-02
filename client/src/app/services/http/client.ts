@@ -47,6 +47,13 @@ client.interceptors.response.use(
     const originalRequest = error.config as InternalAxiosRequestConfig & { _retry?: boolean };
 
     if (error.response?.status === 401 && !originalRequest._retry) {
+      const authEndpoints = ['/api/auth/login/', '/api/auth/register/'];
+      if (authEndpoints.some((ep) => originalRequest.url?.includes(ep))) {
+        const data = error.response?.data as Record<string, string> | undefined;
+        const message = data?.detail || data?.error || 'Authentication failed';
+        return Promise.reject(new Error(message));
+      }
+
       if (isRefreshing) {
         return new Promise<string>((resolve, reject) => {
           failedQueue.push({ resolve, reject });

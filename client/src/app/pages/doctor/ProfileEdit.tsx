@@ -8,6 +8,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '../../components/ui/ca
 import { Avatar, AvatarImage, AvatarFallback } from '../../components/ui/avatar';
 import { Skeleton } from '../../components/ui/skeleton';
 import { Badge } from '../../components/ui/badge';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../../components/ui/select';
 
 import { usePreferences } from '../../context/PreferencesContext';
 import { useAuth } from '../../context/AuthContext';
@@ -15,6 +16,7 @@ import { translations } from '../../utils/translations';
 import { doctorService, type DoctorProfile } from '../../services/doctor.service';
 import { useApiCall } from '../../hooks/useApiCall';
 import { toast } from 'sonner';
+import client from '../../services/http/client';
 
 function ProfileSkeleton() {
   return (
@@ -60,6 +62,7 @@ interface FormState {
   bio: string;
   contact: string;
   years_of_experience: string;
+  specialty_id: string;
   profile_picture: File | null;
   profile_picture_preview: string;
 }
@@ -69,6 +72,14 @@ export function DoctorProfileEdit() {
   const { user } = useAuth();
   const t = translations[language];
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  const [specialties, setSpecialties] = useState<{ id: number; name: string }[]>([]);
+
+  useEffect(() => {
+    client.get('/api/specialties/').then((r) => {
+      setSpecialties(Array.isArray(r.data) ? r.data : r.data.results || []);
+    }).catch(() => {});
+  }, []);
 
   const { data: profile, loading } = useApiCall(
     () => doctorService.getProfile(),
@@ -91,6 +102,7 @@ export function DoctorProfileEdit() {
         bio: profile.bio || '',
         contact: profile.contact || '',
         years_of_experience: String(profile.years_of_experience || 0),
+        specialty_id: profile.specialty_id ? String(profile.specialty_id) : '',
         profile_picture: null,
         profile_picture_preview: profile.profile_picture || '',
       });
@@ -120,6 +132,7 @@ export function DoctorProfileEdit() {
         bio: form.bio,
         contact: form.contact,
         years_of_experience: exp,
+        specialty_id: form.specialty_id ? Number(form.specialty_id) : null,
         ...(form.profile_picture ? { profile_picture: form.profile_picture } : {}),
       });
       toast.success(
@@ -257,17 +270,21 @@ export function DoctorProfileEdit() {
                   <Label>
                     {language === 'en' ? 'Specialty' : 'التخصص'}
                   </Label>
-                  <Input
-                    value={profile?.specialty || ''}
-                    disabled
-                    className="bg-muted"
-                    placeholder={language === 'en' ? 'Set by admin' : 'يحدده المسؤول'}
-                  />
-                  <p className="text-xs text-muted-foreground">
-                    {language === 'en'
-                      ? 'Specialty is assigned by the admin.'
-                      : 'يتم تعيين التخصص من قبل المسؤول.'}
-                  </p>
+                  <Select
+                    value={form.specialty_id}
+                    onValueChange={(value) => setForm((f) => ({ ...f, specialty_id: value }))}
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder={language === 'en' ? 'Select a specialty' : 'اختر التخصص'} />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {specialties.map((s) => (
+                        <SelectItem key={s.id} value={String(s.id)}>
+                          {s.name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
                 </div>
 
                 <div className="space-y-2">

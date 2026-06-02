@@ -62,6 +62,16 @@ export function AdminUsers() {
       .catch((error) => toast.error(error.message));
   };
 
+  const handleUnblock = (userId: number) => {
+    adminService
+      .unblockUser(userId)
+      .then(() => {
+        toast.success(language === 'en' ? 'User unblocked' : 'User unblocked');
+        loadUsers();
+      })
+      .catch((error) => toast.error(error.message));
+  };
+
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <div className="mb-6">
@@ -136,6 +146,17 @@ export function AdminUsers() {
                           >
                             <X className="h-3 w-3" />
                             {t.blockUser}
+                          </Button>
+                        )}
+                        {user.status === 'blocked' && (
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            className="gap-1"
+                            onClick={() => handleUnblock(user.id)}
+                          >
+                            <Check className="h-3 w-3" />
+                            {language === 'en' ? 'Unblock' : 'إلغاء الحظر'}
                           </Button>
                         )}
                       </div>
