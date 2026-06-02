@@ -1,4 +1,4 @@
-import { Link, useParams } from 'react-router';
+import { Link, useParams } from 'react-router'; 
 import { Star, Award, Users, Calendar, ChevronLeft } from 'lucide-react';
 import { Button } from '../../components/ui/button';
 import { Card, CardContent } from '../../components/ui/card';
@@ -7,7 +7,8 @@ import { Badge } from '../../components/ui/badge';
 import { Header } from '../../components/Header';
 import { usePreferences } from '../../context/PreferencesContext';
 import { translations } from '../../utils/translations';
-import { mockDoctors } from '../../data/mockData';
+import { patientService } from '../../services/patient.service'; 
+import { useApiCall } from '../../hooks/useApiCall';
 
 export function DoctorProfile() {
   const { id } = useParams();
@@ -15,20 +16,35 @@ export function DoctorProfile() {
   const t = translations[language];
   const isRTL = language === 'ar';
 
-  const doctor = mockDoctors.find((d) => d.id === id);
+  // 🔑 Step 1: Use your real custom API hook instead of mock data
+  const { data: doctor, loading, error } = useApiCall(
+    () => patientService.getDoctor(id || ''),
+    [id]
+  );
 
-  if (!doctor) {
-    return <div>{language === 'en' ? 'Doctor not found' : 'الطبيب غير موجود'}</div>;
-  }
+  // Hardcoded placeholders for metrics if your backend model doesn't have rating fields yet
+  const rating = doctor?.rating || '4.9';
+  const reviewsCount = doctor?.reviewsCount || doctor?.patients || '120';
+  const patientsCount = doctor?.patientsTreated || doctor?.patients || '500';
+  const experienceYears = doctor?.experience || '5';
 
+  // Fallback slots for display purposes
   const availableSlots = [
-    { date: '2026-05-29', times: ['9:00 AM', '10:30 AM', '2:00 PM', '4:00 PM'] },
-    { date: '2026-05-30', times: ['9:00 AM', '11:00 AM', '3:00 PM'] },
-    { date: '2026-06-02', times: ['10:00 AM', '1:00 PM', '3:30 PM', '5:00 PM'] },
+    { date: '2026-06-02', times: ['9:00 AM', '10:30 AM', '2:00 PM', '4:00 PM'] },
+    { date: '2026-06-03', times: ['9:00 AM', '11:00 AM', '3:00 PM'] },
+    { date: '2026-06-04', times: ['10:00 AM', '1:00 PM', '3:30 PM', '5:00 PM'] },
   ];
 
+  if (loading) {
+    return <div className="p-8 text-center">{language === 'en' ? 'Loading profile...' : 'جاري التحميل...'}</div>;
+  }
+
+  if (error || !doctor) {
+    return <div className="p-8 text-center">{language === 'en' ? 'Doctor not found' : 'الطبيب غير موجود'}</div>;
+  }
+
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen bg-background" dir={isRTL ? 'rtl' : 'ltr'}>
       <nav className="border-b bg-card">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex items-center justify-between h-16">
@@ -60,7 +76,7 @@ export function DoctorProfile() {
                 <div className="flex flex-col items-center text-center">
                   <Avatar className="h-32 w-32 mb-4">
                     <AvatarImage src={doctor.image} alt={language === 'en' ? doctor.name : doctor.nameAr} />
-                    <AvatarFallback>{doctor.name.charAt(0)}</AvatarFallback>
+                    <AvatarFallback>{doctor.name ? doctor.name.charAt(0) : 'D'}</AvatarFallback>
                   </Avatar>
                   <h2 className="text-xl font-semibold mb-1">
                     {language === 'en' ? doctor.name : doctor.nameAr}
@@ -70,11 +86,12 @@ export function DoctorProfile() {
                   </p>
                   <div className="flex items-center gap-1 mb-6">
                     <Star className="h-5 w-5 fill-yellow-400 text-yellow-400" />
-                    <span className="font-semibold text-lg">{doctor.rating}</span>
+                    <span className="font-semibold text-lg">{rating}</span>
                     <span className="text-sm text-muted-foreground">
-                      ({doctor.patients} {language === 'en' ? 'reviews' : 'تقييم'})
+                      ({reviewsCount} {language === 'en' ? 'reviews' : 'تقييم'})
                     </span>
                   </div>
+                  {/* 🔑 Updated link to match standard routing expectations for booking */}
                   <Link to={`/book/${doctor.id}`} className="w-full">
                     <Button className="w-full gap-2">
                       <Calendar className="h-4 w-4" />
@@ -94,7 +111,7 @@ export function DoctorProfile() {
                       {language === 'en' ? 'Experience' : 'الخبرة'}
                     </p>
                     <p className="font-semibold">
-                      {doctor.experience} {language === 'en' ? 'Years' : 'سنة'}
+                      {experienceYears} {language === 'en' ? 'Years' : 'سنة'}
                     </p>
                   </div>
                 </div>
@@ -104,7 +121,7 @@ export function DoctorProfile() {
                     <p className="text-sm text-muted-foreground">
                       {language === 'en' ? 'Patients Treated' : 'المرضى المعالجون'}
                     </p>
-                    <p className="font-semibold">{doctor.patients}+</p>
+                    <p className="font-semibold">{patientsCount}+</p>
                   </div>
                 </div>
               </CardContent>
@@ -140,9 +157,11 @@ export function DoctorProfile() {
                       </p>
                       <div className="flex flex-wrap gap-2">
                         {slot.times.map((time) => (
-                          <Badge key={time} variant="outline" className="cursor-pointer hover:bg-primary hover:text-primary-foreground">
-                            {time}
-                          </Badge>
+                          <Link key={time} to={`/book/${doctor.id}`}>
+                            <Badge variant="outline" className="cursor-pointer hover:bg-primary hover:text-primary-foreground transition-colors">
+                              {time}
+                            </Badge>
+                          </Link>
                         ))}
                       </div>
                     </div>

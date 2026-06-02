@@ -1,5 +1,5 @@
-import { Link } from 'react-router';
-import { Calendar, Clock, User } from 'lucide-react';
+import { Link } from 'react-router'; 
+import { Calendar, Clock, User, XCircle, CalendarDays } from 'lucide-react';
 import { Button } from '../../components/ui/button';
 import { Card, CardContent } from '../../components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '../../components/ui/tabs';
@@ -9,8 +9,10 @@ import { StatusBadge } from '../../components/StatusBadge';
 import { AppointmentListSkeleton } from '../../components/Skeletons';
 import { usePreferences } from '../../context/PreferencesContext';
 import { translations } from '../../utils/translations';
-import { patientService } from '../../services/patient.service';
+import { patientService } from '../../services/patient.service'; // Match file path
 import { useApiCall } from '../../hooks/useApiCall';
+import { toast } from 'sonner';
+import { useState } from 'react';
 
 type Appointment = {
   id: string;
@@ -24,7 +26,16 @@ type Appointment = {
   notes?: string | null;
 };
 
-function AppointmentCard({ appointment, language }: { appointment: Appointment; language: string }) {
+// 🔑 Updated: Passed down an onCancel handler to the card component
+type CardProps = {
+  appointment: Appointment;
+  language: string;
+  onCancel?: (id: number) => void;
+};
+
+function AppointmentCard({ appointment, language, onCancel }: CardProps) {
+  const isUpcoming = appointment.status === 'confirmed' || appointment.status === 'pending';
+
   return (
     <Card>
       <CardContent className="p-6">
@@ -64,6 +75,22 @@ function AppointmentCard({ appointment, language }: { appointment: Appointment; 
                 {appointment.notes}
               </p>
             )}
+
+            {/* 🔑 Action Buttons for Upcoming Bookings */}
+            {isUpcoming && onCancel && (
+              <div className="flex gap-2 justify-end mt-4 pt-4 border-t">
+                {/* Cancel Button */}
+                <Button 
+                  variant="destructive" 
+                  size="sm" 
+                  className="gap-2"
+                  onClick={() => onCancel(Number(appointment.id))}
+                >
+                  <XCircle className="h-4 w-4" />
+                  {language === 'en' ? 'Cancel' : 'إلغاء'}
+                </Button>
+              </div>
+            )}
           </div>
         </div>
       </CardContent>
@@ -74,11 +101,32 @@ function AppointmentCard({ appointment, language }: { appointment: Appointment; 
 export function MyAppointments() {
   const { language } = usePreferences();
   const t = translations[language];
+  const [refreshTrigger, setRefreshTrigger] = useState(0);
 
+  // Added refreshTrigger to reload data cleanly after an action
   const { data: appointments, loading } = useApiCall(
     () => patientService.getAppointments(),
-    []
+    [refreshTrigger]
   );
+
+  // 🔑 Handle Action Event for Cancellation
+  const handleCancel = async (id: number) => {
+    toast(language === 'en' ? 'Are you sure you want to cancel?' : 'هل أنت متأكد من إلغاء الموعد؟', {
+      action: {
+        label: language === 'en' ? 'Confirm' : 'تأكيد',
+        onClick: async () => {
+          try {
+            await patientService.cancelAppointment(id);
+            toast.success(language === 'en' ? 'Cancelled successfully!' : 'تم الإلغاء بنجاح!');
+            setRefreshTrigger(prev => prev + 1); // Triggers re-fetch from your clean backend view!
+          } catch (error: any) {
+            const errorMsg = error.response?.data?.error || 'Failed to cancel';
+            toast.error(errorMsg);
+          }
+        },
+      },
+    });
+  };
 
   const all = appointments || [];
   const upcoming = all.filter((a) => a.status === 'confirmed' || a.status === 'pending');
@@ -95,7 +143,7 @@ export function MyAppointments() {
   );
 
   return (
-    <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+    <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-8" dir={language === 'ar' ? 'rtl' : 'ltr'}>
         <div className="flex flex-wrap items-center justify-between gap-4 mb-6">
           <div>
             <h1 className="text-3xl font-bold mb-2">{t.myAppointments}</h1>
@@ -131,7 +179,7 @@ export function MyAppointments() {
                     language === 'en' ? 'No upcoming appointments' : 'لا توجد مواعيد قادمة'
                   )
                 : upcoming.map((a) => (
-                    <AppointmentCard key={a.id} appointment={a} language={language} />
+                    <AppointmentCard key={a.id} appointment={a} language={language} onCancel={handleCancel} />
                   ))}
             </TabsContent>
 
