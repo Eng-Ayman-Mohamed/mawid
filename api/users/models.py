@@ -29,15 +29,23 @@ class CustomUserManager(BaseUserManager):
 class CustomUser(AbstractBaseUser, PermissionsMixin):
     role        = models.CharField(max_length=10, choices=UserRole.choices, default=UserRole.PATIENT)
     email       = models.EmailField(unique=True)
+    first_name  = models.CharField(max_length=50, blank=True)
+    last_name   = models.CharField(max_length=50, blank=True)
     is_approved = models.BooleanField(default=False)
     is_blocked  = models.BooleanField(default=False)
-    is_active = models.BooleanField(default=True)
-    is_staff  = models.BooleanField(default=False)
+    is_active   = models.BooleanField(default=True)
+    is_staff    = models.BooleanField(default=False)
 
     objects = CustomUserManager()
 
     USERNAME_FIELD  = 'email'
-    REQUIRED_FIELDS = ['role']  
+    REQUIRED_FIELDS = ['role']
+
+    def get_full_name(self):
+        return f'{self.first_name} {self.last_name}'.strip()
+
+    def get_short_name(self):
+        return self.email
 
     def __str__(self):
         return f'{self.email} ({self.role})'
