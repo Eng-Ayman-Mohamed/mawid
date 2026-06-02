@@ -18,6 +18,7 @@ export interface RegisterData {
   email: string;
   password: string;
   role: string;
+  specialty_id?: number | null;
 }
 
 export const authService = {

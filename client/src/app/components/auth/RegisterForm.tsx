@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import { yupResolver } from '@hookform/resolvers/yup';
 import { useNavigate } from 'react-router';
@@ -10,6 +10,8 @@ import { translations } from '../../utils/translations';
 import { Button } from '../ui/button';
 import { Input } from '../ui/input';
 import { Label } from '../ui/label';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../ui/select';
+import client from '../../services/http/client';
 
 export function RegisterForm() {
   const { language } = usePreferences();
@@ -17,6 +19,15 @@ export function RegisterForm() {
   const navigate = useNavigate();
   const t = translations[language];
   const [selectedRole, setSelectedRole] = useState<'patient' | 'doctor'>('patient');
+
+  const [specialties, setSpecialties] = useState<{ id: number; name: string }[]>([]);
+  const [selectedSpecialty, setSelectedSpecialty] = useState<string>('');
+
+  useEffect(() => {
+    client.get('/api/specialties/').then((r) => {
+      setSpecialties(Array.isArray(r.data) ? r.data : r.data.results || []);
+    }).catch(() => {});
+  }, []);
 
   const {
     register,
@@ -34,6 +45,7 @@ export function RegisterForm() {
         email: data.email,
         password: data.password,
         role: selectedRole,
+        specialty_id: selectedRole === 'doctor' ? (selectedSpecialty ? Number(selectedSpecialty) : null) : undefined,
       });
       navigate(selectedRole === 'doctor' ? '/doctor/dashboard' : '/my-appointments');
     } catch (error) {
@@ -84,6 +96,24 @@ export function RegisterForm() {
             </div>
           </button>
         </div>
+
+        {selectedRole === 'doctor' && (
+          <div className="space-y-2">
+            <Label>{language === 'en' ? 'Specialty' : 'التخصص'}</Label>
+            <Select value={selectedSpecialty} onValueChange={setSelectedSpecialty}>
+              <SelectTrigger>
+                <SelectValue placeholder={language === 'en' ? 'Select a specialty' : 'اختر التخصص'} />
+              </SelectTrigger>
+              <SelectContent>
+                {specialties.map((s) => (
+                  <SelectItem key={s.id} value={String(s.id)}>
+                    {s.name}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+        )}
 
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
           <div className="grid grid-cols-2 gap-3">

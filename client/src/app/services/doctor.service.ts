@@ -13,6 +13,7 @@ export interface DoctorProfile {
   years_of_experience: number;
   profile_picture: string | null;
   specialty: string;
+  specialty_id: number | null;
   user: {
     id: number;
     email: string;
@@ -90,7 +91,8 @@ export const doctorService = {
         contact: data.contact || '',
         years_of_experience: data.years_of_experience || 0,
         profile_picture: data.profile_picture || null,
-        specialty: data.specialty || '',
+        specialty: data.specialty_name || '',
+        specialty_id: data.specialty_id ?? null,
         user: {
           id: data.user?.id || 0,
           email: data.user?.email || '',
@@ -111,6 +113,7 @@ export const doctorService = {
     contact?: string;
     years_of_experience?: number;
     profile_picture?: File | null;
+    specialty_id?: number | null;
   }): Promise<DoctorProfile> {
     // Use FormData if a file is included
     if (data.profile_picture instanceof File) {
@@ -119,6 +122,8 @@ export const doctorService = {
       if (data.contact !== undefined) form.append('contact', data.contact);
       if (data.years_of_experience !== undefined)
         form.append('years_of_experience', String(data.years_of_experience));
+      if (data.specialty_id !== undefined)
+        form.append('specialty_id', String(data.specialty_id));
       form.append('profile_picture', data.profile_picture);
       return client
         .patch('/api/doctors/profile/', form, {
@@ -132,6 +137,8 @@ export const doctorService = {
     if (data.contact !== undefined) payload.contact = data.contact;
     if (data.years_of_experience !== undefined)
       payload.years_of_experience = data.years_of_experience;
+    if (data.specialty_id !== undefined)
+      payload.specialty_id = data.specialty_id;
     // sending null explicitly clears the picture
     if (data.profile_picture === null) payload.profile_picture = null;
 
