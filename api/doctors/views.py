@@ -1,14 +1,16 @@
-from rest_framework import viewsets, permissions, filters, generics, status
-from rest_framework.decorators import action
+from rest_framework import viewsets, permissions, filters, generics
 from rest_framework.response import Response
 from django_filters.rest_framework import DjangoFilterBackend
 from .models import Doctor, DoctorAvailability, Specialty
 from .serializers import (
-    DoctorSerializer, DoctorAvailabilitySerializer,
-    DoctorProfileUpdateSerializer, AppointmentStatusSerializer, SpecialtySerializer
+    DoctorSerializer,
+    DoctorAvailabilitySerializer,
+    DoctorProfileUpdateSerializer,
+    AppointmentStatusSerializer,
+    AppointmentSerializer,          # ← single clean import
+    SpecialtySerializer,
 )
 from patients.models import Appointment
-from .serializers import AppointmentSerializer
 from users.permissions import IsAdminRole, IsDoctorRole
 
 
@@ -42,7 +44,7 @@ class DoctorProfileUpdateView(generics.RetrieveUpdateAPIView):
 class DoctorAvailabilityViewSet(viewsets.ModelViewSet):
     serializer_class = DoctorAvailabilitySerializer
     permission_classes = [IsDoctorRole]
-    http_method_names = ['get', 'post', 'delete']  # no PUT/PATCH on slots
+    http_method_names = ['get', 'post', 'delete']
     lookup_value_regex = r'[0-9]+'
 
     def get_queryset(self):
@@ -72,12 +74,12 @@ class SpecialtyViewSet(viewsets.ModelViewSet):
     serializer_class = SpecialtySerializer
 
     def get_permissions(self):
-        if self.action == 'list' or self.action == 'retrieve':
+        if self.action in ('list', 'retrieve'):
             return [permissions.AllowAny()]
         return [IsAdminRole()]
 
 
-# ─── 7. PATCH /api/appointments/{id}/status/ — Confirm / reject + notes
+# ─── 7. PATCH /api/appointments/{id}/status/ — Confirm / cancel / complete
 class AppointmentStatusUpdateView(generics.UpdateAPIView):
     serializer_class = AppointmentStatusSerializer
     permission_classes = [IsDoctorRole]
