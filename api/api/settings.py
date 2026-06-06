@@ -28,6 +28,7 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
 
     # Third party
+    'whitenoise.runserver_nostatic',
     'cloudinary_storage',
     'cloudinary',
     'rest_framework',
@@ -49,6 +50,7 @@ INSTALLED_APPS = [
 MIDDLEWARE = [
     'corsheaders.middleware.CorsMiddleware',
     'django.middleware.security.SecurityMiddleware',
+    'whitenoise.middleware.WhiteNoiseMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
@@ -81,17 +83,23 @@ TEMPLATES = [
 
 
 # ─── Database ─────────────────────────────────────────────────────────────────
-DATABASES = {
-    'default': {
-        'ENGINE':   'django.db.backends.postgresql',
-        'NAME':     os.environ.get('DB_NAME', 'mawid_dev'),
-        'USER':     os.environ.get('DB_USER', 'iti'),
-        'PASSWORD': os.environ.get('DB_PASSWORD', '33590495'),
-        'HOST':     os.environ.get('DB_HOST', 'localhost'),
-        'PORT':     os.environ.get('DB_PORT', '5432'),
-        'DISABLE_SERVER_SIDE_CURSORS': True,
+import dj_database_url
+
+DATABASE_URL = os.environ.get('DATABASE_URL')
+if DATABASE_URL:
+    DATABASES = {'default': dj_database_url.parse(DATABASE_URL, conn_max_age=600)}
+else:
+    DATABASES = {
+        'default': {
+            'ENGINE':   'django.db.backends.postgresql',
+            'NAME':     os.environ.get('DB_NAME', 'mawid_dev'),
+            'USER':     os.environ.get('DB_USER', 'iti'),
+            'PASSWORD': os.environ.get('DB_PASSWORD', ''),
+            'HOST':     os.environ.get('DB_HOST', 'localhost'),
+            'PORT':     os.environ.get('DB_PORT', '5432'),
+            'DISABLE_SERVER_SIDE_CURSORS': True,
+        }
     }
-}
 
 
 # ─── Auth ─────────────────────────────────────────────────────────────────────
@@ -150,6 +158,13 @@ USE_TZ        = True
 
 # ─── Static & Media files ──────────────────────────────────────────────────────
 STATIC_URL = 'static/'
+STATIC_ROOT = BASE_DIR / 'staticfiles'
+
+STORAGES = {
+    'staticfiles': {
+        'BACKEND': 'whitenoise.storage.CompressedManifestStaticFilesStorage',
+    },
+}
 
 # ─── Cloudinary (production-ready media storage) ──────────────────────────────
 if os.environ.get('CLOUDINARY_CLOUD_NAME'):
